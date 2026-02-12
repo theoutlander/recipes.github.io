@@ -67,6 +67,7 @@ Optional args for batch publish:
 - `--limit <n>` max URLs per run (default `50`)
 - `--republish` force republish even if source URL already exists
 - `--recheck-existing` re-extract existing source URLs and only republish when extracted content changed
+- `--prune-missing` delete published recipes whose source URLs are no longer in the URL list
 
 Change-reprocessing behavior:
 
@@ -74,6 +75,7 @@ Change-reprocessing behavior:
 - `--recheck-existing` compares new extraction fingerprint against the stored fingerprint.
 - If unchanged, recipe is skipped.
 - If changed, recipe is republished in-place (same slug) and static pages are rebuilt.
+- `--prune-missing` keeps the static site in sync with the source URL inbox by removing stale recipes.
 
 ## Environment
 

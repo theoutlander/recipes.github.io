@@ -8,6 +8,11 @@ on:
         required: false
         type: boolean
         default: false
+      prune_missing:
+        description: "Delete published recipes whose source URLs are no longer in the inbox"
+        required: false
+        type: boolean
+        default: true
       limit:
         description: "Max URLs to process this run"
         required: false
@@ -58,10 +63,14 @@ jobs:
           ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
           RUN_LIMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.limit || 25 }}
           RECHECK_EXISTING: ${{ github.event_name == 'workflow_dispatch' && inputs.recheck_existing || false }}
+          PRUNE_MISSING: ${{ github.event_name != 'workflow_dispatch' || inputs.prune_missing }}
         run: |
           ARGS="--file content/source-urls.txt --api http://localhost:3030 --limit ${RUN_LIMIT}"
           if [ "${RECHECK_EXISTING}" = "true" ]; then
             ARGS="${ARGS} --recheck-existing"
+          fi
+          if [ "${PRUNE_MISSING}" = "true" ]; then
+            ARGS="${ARGS} --prune-missing"
           fi
           npm run publish:urls -- ${ARGS}
 

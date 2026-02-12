@@ -34,6 +34,7 @@ async function main() {
   const limit = Number(args.limit || 50);
   const republish = Boolean(args.republish);
   const recheckExisting = Boolean(args.recheckExisting);
+  const pruneMissing = Boolean(args.pruneMissing);
   const adminKey = String(args.key || ADMIN_KEY).trim();
 
   if (!fs.existsSync(filePath)) {
@@ -44,7 +45,29 @@ async function main() {
   }
 
   const urls = dedupe(readUrls(filePath));
-  const existingRecipeIndex = loadExistingRecipeIndex(path.join(process.cwd(), "content", "recipes"));
+  const recipesDirectory = path.join(process.cwd(), "content", "recipes");
+  const existingRecipeRecords = loadExistingRecipeRecords(recipesDirectory);
+  const existingRecipeIndex = buildExistingRecipeIndex(existingRecipeRecords);
+  const desiredUrlKeys = new Set(urls.map((url) => normalizeUrlKey(url)));
+  const pruneResult = { removed: [], failed: [] };
+
+  if (pruneMissing) {
+    for (const record of existingRecipeRecords) {
+      if (!record.sourceUrlKey || desiredUrlKeys.has(record.sourceUrlKey)) {
+        continue;
+      }
+      try {
+        fs.unlinkSync(record.filePath);
+        pruneResult.removed.push(record);
+        process.stdout.write(`- Removed: ${record.sourceUrl}\n`);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        pruneResult.failed.push({ ...record, reason: message });
+        process.stdout.write(`- Failed to remove ${record.sourceUrl}: ${message}\n`);
+      }
+    }
+  }
+
   const publishQueue = [];
   for (const url of urls) {
     const existing = existingRecipeIndex.get(normalizeUrlKey(url)) || null;
@@ -57,12 +80,16 @@ async function main() {
     }
   }
 
-  if (publishQueue.length === 0) {
+  if (publishQueue.length === 0 && pruneResult.removed.length === 0 && pruneResult.failed.length === 0) {
     process.stdout.write("No URLs to process.\n");
     return;
   }
 
-  process.stdout.write(`Publishing ${publishQueue.length} URL(s) via ${apiBase}\n`);
+  if (publishQueue.length > 0) {
+    process.stdout.write(`Publishing ${publishQueue.length} URL(s) via ${apiBase}\n`);
+  } else {
+    process.stdout.write("No URLs to publish.\n");
+  }
   const results = [];
 
   for (const item of publishQueue) {
@@ -107,22 +134,26 @@ async function main() {
     }
   }
 
-  try {
-    await apiRequest(`${apiBase}/api/admin/rebuild`, {
-      method: "POST",
-      headers: { "x-admin-key": adminKey },
-      body: JSON.stringify({}),
-    });
-  } catch (error) {
-    process.stdout.write(`Rebuild warning: ${error instanceof Error ? error.message : String(error)}\n`);
+  if (publishQueue.length > 0 || pruneResult.removed.length > 0) {
+    try {
+      await apiRequest(`${apiBase}/api/admin/rebuild`, {
+        method: "POST",
+        headers: { "x-admin-key": adminKey },
+        body: JSON.stringify({}),
+      });
+    } catch (error) {
+      process.stdout.write(`Rebuild warning: ${error instanceof Error ? error.message : String(error)}\n`);
+    }
   }
 
   const publishedCount = results.filter((item) => item.status === "published").length;
   const unchangedCount = results.filter((item) => item.status === "unchanged").length;
   const skippedCount = results.filter((item) => item.status === "skipped").length;
   const failedCount = results.filter((item) => item.status === "failed").length;
+  const prunedCount = pruneResult.removed.length;
+  const pruneFailedCount = pruneResult.failed.length;
   process.stdout.write(
-    `Done. Published: ${publishedCount}, Unchanged: ${unchangedCount}, Skipped: ${skippedCount}, Failed: ${failedCount}\n`
+    `Done. Published: ${publishedCount}, Unchanged: ${unchangedCount}, Pruned: ${prunedCount}, Skipped: ${skippedCount}, Failed: ${failedCount}, PruneFailed: ${pruneFailedCount}\n`
   );
 }
 
@@ -149,6 +180,8 @@ function parseArgs(args) {
       parsed.republish = true;
     } else if (arg === "--recheck-existing") {
       parsed.recheckExisting = true;
+    } else if (arg === "--prune-missing") {
+      parsed.pruneMissing = true;
     }
   }
   return parsed;
@@ -162,8 +195,8 @@ function readUrls(filePath) {
     .filter((line) => line && !line.startsWith("#"));
 }
 
-function loadExistingRecipeIndex(directoryPath) {
-  const output = new Map();
+function loadExistingRecipeRecords(directoryPath) {
+  const output = [];
   if (!fs.existsSync(directoryPath)) {
     return output;
   }
@@ -174,23 +207,33 @@ function loadExistingRecipeIndex(directoryPath) {
       const raw = fs.readFileSync(absolute, "utf8");
       const recipe = JSON.parse(raw);
       const sourceUrl = String(recipe?.meta?.sourceUrl || "").trim();
-      if (sourceUrl) {
-        const key = normalizeUrlKey(sourceUrl);
-        const candidate = {
-          sourceUrl,
-          slug: String(recipe?.meta?.slug || path.basename(file, ".json")).trim() || path.basename(file, ".json"),
-          servings: Number(recipe?.meta?.servings || 0) || 0,
-          publishedAt: String(recipe?.meta?.publishedAt || "").trim(),
-          sourceFingerprint: String(recipe?.meta?.sourceFingerprint || "").trim(),
-          updatedAt: String(recipe?.meta?.updatedAt || recipe?.meta?.normalizedAt || "").trim(),
-        };
-        const existing = output.get(key);
-        if (!existing || toTimestamp(candidate.updatedAt) >= toTimestamp(existing.updatedAt)) {
-          output.set(key, candidate);
-        }
-      }
+      const sourceUrlKey = normalizeUrlKey(sourceUrl);
+      output.push({
+        filePath: absolute,
+        sourceUrl,
+        sourceUrlKey,
+        slug: String(recipe?.meta?.slug || path.basename(file, ".json")).trim() || path.basename(file, ".json"),
+        servings: Number(recipe?.meta?.servings || 0) || 0,
+        publishedAt: String(recipe?.meta?.publishedAt || "").trim(),
+        sourceFingerprint: String(recipe?.meta?.sourceFingerprint || "").trim(),
+        updatedAt: String(recipe?.meta?.updatedAt || recipe?.meta?.normalizedAt || "").trim(),
+      });
     } catch {
       // Ignore unreadable records.
+    }
+  }
+  return output;
+}
+
+function buildExistingRecipeIndex(records) {
+  const output = new Map();
+  for (const record of records || []) {
+    if (!record?.sourceUrlKey) {
+      continue;
+    }
+    const existing = output.get(record.sourceUrlKey);
+    if (!existing || toTimestamp(record.updatedAt) >= toTimestamp(existing.updatedAt)) {
+      output.set(record.sourceUrlKey, record);
     }
   }
   return output;

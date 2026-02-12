@@ -823,7 +823,7 @@ function extractIngredientLikeLines(text) {
     const section = [];
     for (let index = startIndex + 1; index < lines.length; index += 1) {
       const line = lines[index];
-      if (/^\s*(instructions?|method|directions?)\b/i.test(line)) {
+      if (/^\s*(instructions?|methods?|directions?)\b/i.test(line)) {
         break;
       }
       if (line.length < 3) {
@@ -850,7 +850,7 @@ function extractInstructionLikeLines(text) {
     .map((line) => line.trim())
     .filter(Boolean);
 
-  const startIndex = lines.findIndex((line) => /\b(instructions?|directions?|method)\b/i.test(line));
+  const startIndex = lines.findIndex((line) => /\b(instructions?|directions?|methods?)\b/i.test(line));
   if (startIndex >= 0) {
     const section = [];
     for (let index = startIndex + 1; index < lines.length; index += 1) {
@@ -864,13 +864,38 @@ function extractInstructionLikeLines(text) {
       section.push(line.replace(/^\d+[\.\)\-\s]*/, ""));
     }
     if (section.length > 0) {
+      const actionSection = filterActionInstructionLines(section);
+      if (actionSection.length >= 3) {
+        return actionSection;
+      }
       return section;
     }
+  }
+
+  // Some channels include free-form method paragraphs with no numbered steps.
+  const actionLines = filterActionInstructionLines(lines);
+  if (actionLines.length > 0) {
+    return actionLines;
   }
 
   return lines
     .filter((line) => /^\d+[\.\)\-\s]/.test(line))
     .map((line) => line.replace(/^\d+[\.\)\-\s]*/, ""));
+}
+
+function filterActionInstructionLines(lines) {
+  return dedupeStrings(
+    (lines || [])
+      .map((line) => String(line || "").replace(/^\d+[\.\)\-\s]*/, "").trim())
+      .filter(
+        (line) =>
+          line.length >= 18 &&
+          /\b(add|mix|stir|cook|bake|heat|whisk|simmer|season|serve|chop|slice|boil|pour|combine|saute|grill|marinate|fry)\b/i.test(
+            line
+          ) &&
+          !/^\s*(ingredients?|powdered spices?|for marinade|for .*gravy|methods?)\s*:?\s*$/i.test(line)
+      )
+  ).slice(0, 25);
 }
 
 function transcriptToSteps(transcriptItems) {

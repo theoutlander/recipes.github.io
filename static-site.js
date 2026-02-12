@@ -112,6 +112,7 @@ function buildRecipeHtml(recipe, siteUrl) {
   const canonicalUrl = siteUrl ? `${siteUrl}/${canonicalPath}` : canonicalPath;
   const imageUrl = recipe.meta.imageUrl || "";
   const ingredients = recipe.ingredients.map((item) => formatIngredient(item));
+  const ingredientVisualCards = recipe.ingredients.map((item, index) => buildIngredientVisualCardHtml(item, index));
   const miseItems = (recipe.mise || []).map((item) => String(item || "").trim()).filter(Boolean);
   const bowlItems = Array.isArray(recipe.bowls) ? recipe.bowls : [];
   const stepItems = recipe.steps.map((step) => String(step || "").trim()).filter(Boolean);
@@ -194,6 +195,19 @@ function buildRecipeHtml(recipe, siteUrl) {
                 : "<li class=\"empty-line\">No ingredients found.</li>"
             }
           </ul>
+          ${
+            ingredients.length > 0
+              ? `<div class="visual-controls">
+            <button type="button" class="action-btn ghost small" id="toggleIngredientVisuals" aria-pressed="false">
+              Show Ingredient Photos
+            </button>
+            <p>Optional visual mode for shopping and prep.</p>
+          </div>
+          <div class="visual-grid" id="ingredientVisualGrid" hidden>
+            ${ingredientVisualCards.join("")}
+          </div>`
+              : ""
+          }
         </article>
         <article class="card checklist-card">
           <h2>Mise en Place</h2>
@@ -311,6 +325,33 @@ function buildStepItemHtml(step, index) {
     </label>
     <button type="button" class="focus-jump" data-step-jump="${stepNumber}">Focus</button>
   </li>`;
+}
+
+function buildIngredientVisualCardHtml(item, index) {
+  const label = formatIngredient(item) || `Ingredient ${index + 1}`;
+  const query = ingredientVisualQuery(item, label);
+  const category =
+    item && typeof item === "object"
+      ? String(item.category || "").trim()
+      : "";
+  return `<article class="visual-card" data-ingredient-query="${escapeHtml(query)}" data-ingredient-label="${escapeHtml(
+    label
+  )}" data-ingredient-category="${escapeHtml(category)}">
+    <div class="visual-image-wrap">
+      <img loading="lazy" alt="${escapeHtml(label)} ingredient image" />
+    </div>
+    <p>${escapeHtml(label)}</p>
+  </article>`;
+}
+
+function ingredientVisualQuery(item, fallback) {
+  if (item && typeof item === "object") {
+    const direct = String(item.name || item.raw || "").trim();
+    if (direct) {
+      return direct;
+    }
+  }
+  return String(fallback || "").trim();
 }
 
 function slugify(value) {

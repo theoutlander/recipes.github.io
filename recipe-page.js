@@ -11,10 +11,17 @@ const focusStepText = document.getElementById("focusStepText");
 const progressLabel = document.getElementById("progressLabel");
 const progressBar = document.getElementById("progressBar");
 const progressTrack = document.getElementById("progressTrack");
+const toggleIngredientVisualsButton = document.getElementById("toggleIngredientVisuals");
+const ingredientVisualGrid = document.getElementById("ingredientVisualGrid");
 
 const checklistInputs = [...document.querySelectorAll("input[type='checkbox'][data-check-group][data-check-id]")];
 const stepItems = [...document.querySelectorAll(".step-item[data-step-index]")];
 const jumpButtons = [...document.querySelectorAll("[data-step-jump]")];
+const ingredientVisualCards = [...document.querySelectorAll(".visual-card[data-ingredient-query]")];
+
+const UNIT_PATTERN =
+  /\b(cups?|cup|tbsp|tablespoons?|tsp|teaspoons?|pounds?|lbs?|lb|ounces?|oz|grams?|g|kilograms?|kg|ml|l|cloves?|clove|cans?|can|packages?|package|pkg|pinch|dash|slices?|slice)\b/gi;
+const INGREDIENT_IMAGE_CACHE_PREFIX = "miseflow:ingredient-image:v1:";
 
 const stepEntries = stepItems
   .map((item) => {
@@ -54,6 +61,7 @@ function initialize() {
     state.currentStep = stepEntries.length > 0 ? 1 : 0;
   }
   setCookMode(Boolean(state.cookMode), false);
+  setIngredientVisualsOpen(Boolean(state.visualsOpen));
   updateStepFocus(false);
   updateStepStyles();
   updateProgress();
@@ -95,7 +103,7 @@ function bindStepControls() {
         return;
       }
       state.currentStep = normalizeCurrentStep(state.currentStep - 1);
-      updateStepFocus(true);
+      updateStepFocus(false);
       saveState();
     });
   }
@@ -106,7 +114,7 @@ function bindStepControls() {
         return;
       }
       state.currentStep = normalizeCurrentStep(state.currentStep + 1);
-      updateStepFocus(true);
+      updateStepFocus(false);
       saveState();
     });
   }
@@ -126,7 +134,7 @@ function bindStepControls() {
       if (state.currentStep < stepEntries.length) {
         state.currentStep = normalizeCurrentStep(state.currentStep + 1);
       }
-      updateStepFocus(true);
+      updateStepFocus(false);
       updateStepStyles();
       updateProgress();
       saveState();
@@ -157,6 +165,13 @@ function bindGlobalControls() {
       saveState();
     });
   }
+
+  if (toggleIngredientVisualsButton && ingredientVisualGrid) {
+    toggleIngredientVisualsButton.addEventListener("click", () => {
+      setIngredientVisualsOpen(!state.visualsOpen);
+      saveState();
+    });
+  }
 }
 
 function setCookMode(enabled, scrollToStep) {
@@ -169,6 +184,222 @@ function setCookMode(enabled, scrollToStep) {
   if (enabled) {
     updateStepFocus(Boolean(scrollToStep));
   }
+}
+
+function setIngredientVisualsOpen(enabled) {
+  if (!toggleIngredientVisualsButton || !ingredientVisualGrid) {
+    return;
+  }
+  state.visualsOpen = Boolean(enabled);
+  ingredientVisualGrid.hidden = !state.visualsOpen;
+  toggleIngredientVisualsButton.textContent = state.visualsOpen ? "Hide Ingredient Photos" : "Show Ingredient Photos";
+  toggleIngredientVisualsButton.setAttribute("aria-pressed", state.visualsOpen ? "true" : "false");
+  if (state.visualsOpen) {
+    hydrateIngredientVisuals();
+  }
+}
+
+function hydrateIngredientVisuals() {
+  for (const card of ingredientVisualCards) {
+    void loadVisualCardImage(card);
+  }
+}
+
+async function loadVisualCardImage(card) {
+  const img = card.querySelector("img");
+  if (!img || img.dataset.loaded === "true") {
+    return;
+  }
+
+  const label = String(card.dataset.ingredientLabel || card.dataset.ingredientQuery || "").trim();
+  const category = String(card.dataset.ingredientCategory || "").trim();
+  const normalizedQuery = normalizeIngredientQuery(card.dataset.ingredientQuery || label);
+  const fallbackUrl = buildFallbackIngredientImage(normalizedQuery || label, category);
+
+  img.src = fallbackUrl;
+  img.dataset.loaded = "pending";
+
+  const cached = readIngredientImageCache(normalizedQuery);
+  if (cached) {
+    img.src = cached;
+    img.dataset.loaded = "true";
+    card.classList.add("has-photo");
+    return;
+  }
+
+  const photoUrl = await fetchIngredientPhoto(normalizedQuery);
+  if (photoUrl) {
+    img.src = photoUrl;
+    img.dataset.loaded = "true";
+    card.classList.add("has-photo");
+    writeIngredientImageCache(normalizedQuery, photoUrl);
+    return;
+  }
+
+  img.dataset.loaded = "true";
+}
+
+function normalizeIngredientQuery(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/\b\d+(?:\s+\d+\/\d+|\/\d+|\.\d+)?\b/g, " ")
+    .replace(UNIT_PATTERN, " ")
+    .replace(/[^a-z\s-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 48);
+}
+
+function readIngredientImageCache(query) {
+  if (!query) {
+    return "";
+  }
+  try {
+    const raw = localStorage.getItem(`${INGREDIENT_IMAGE_CACHE_PREFIX}${query}`);
+    if (!raw) {
+      return "";
+    }
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.url === "string" && parsed.url) {
+      return parsed.url;
+    }
+  } catch {
+    return "";
+  }
+  return "";
+}
+
+function writeIngredientImageCache(query, url) {
+  if (!query || !url) {
+    return;
+  }
+  try {
+    localStorage.setItem(
+      `${INGREDIENT_IMAGE_CACHE_PREFIX}${query}`,
+      JSON.stringify({
+        url,
+        savedAt: new Date().toISOString(),
+      })
+    );
+  } catch {
+    // Ignore localStorage quota issues.
+  }
+}
+
+async function fetchIngredientPhoto(query) {
+  if (!query || query.length < 2) {
+    return "";
+  }
+  const searchTerm = `${query} food ingredient`;
+  const params = new URLSearchParams({
+    action: "query",
+    format: "json",
+    origin: "*",
+    generator: "search",
+    gsrsearch: searchTerm,
+    gsrnamespace: "0",
+    gsrlimit: "1",
+    prop: "pageimages",
+    piprop: "thumbnail",
+    pithumbsize: "360",
+  });
+
+  try {
+    const response = await fetch(`https://en.wikipedia.org/w/api.php?${params.toString()}`, {
+      cache: "force-cache",
+    });
+    if (!response.ok) {
+      return "";
+    }
+    const payload = await response.json();
+    const pages = payload?.query?.pages;
+    if (!pages || typeof pages !== "object") {
+      return "";
+    }
+    for (const page of Object.values(pages)) {
+      if (typeof page?.thumbnail?.source === "string" && page.thumbnail.source) {
+        return page.thumbnail.source;
+      }
+    }
+  } catch {
+    return "";
+  }
+  return "";
+}
+
+function buildFallbackIngredientImage(query, category) {
+  const label = String(query || "ingredient").trim() || "ingredient";
+  const seed = `${label}:${category}`;
+  const emoji = pickIngredientEmoji(label, category);
+  const [start, end] = gradientFromSeed(seed);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 200">
+    <defs>
+      <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="${start}" />
+        <stop offset="100%" stop-color="${end}" />
+      </linearGradient>
+    </defs>
+    <rect width="280" height="200" rx="24" fill="url(#g)" />
+    <text x="50%" y="52%" text-anchor="middle" dominant-baseline="middle" font-size="72">${emoji}</text>
+  </svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+function pickIngredientEmoji(query, category) {
+  const categoryKey = String(category || "").toLowerCase();
+  if (categoryKey === "produce") {
+    return "🥬";
+  }
+  if (categoryKey === "protein") {
+    return "🍗";
+  }
+  if (categoryKey === "dairy") {
+    return "🧀";
+  }
+  if (categoryKey === "spice") {
+    return "🧂";
+  }
+  if (categoryKey === "pantry") {
+    return "🥫";
+  }
+
+  const text = String(query || "").toLowerCase();
+  if (/\b(onion|garlic|carrot|broccoli|spinach|pepper|tomato)\b/.test(text)) {
+    return "🥕";
+  }
+  if (/\b(chicken|beef|pork|fish|shrimp|turkey|sausage)\b/.test(text)) {
+    return "🍖";
+  }
+  if (/\b(cheese|milk|cream|butter|yogurt)\b/.test(text)) {
+    return "🧀";
+  }
+  if (/\b(flour|rice|pasta|bean|broth|stock|oil)\b/.test(text)) {
+    return "🥣";
+  }
+  return "🍽️";
+}
+
+function gradientFromSeed(seed) {
+  const palette = [
+    ["#f8ddc5", "#f1b18b"],
+    ["#d5e9d7", "#8fbe96"],
+    ["#d7e7f4", "#90b6d6"],
+    ["#f2decb", "#d7b48c"],
+    ["#e3d8ef", "#b79ad0"],
+    ["#f4dfcc", "#d6a173"],
+  ];
+  const index = Math.abs(hashCode(seed)) % palette.length;
+  return palette[index];
+}
+
+function hashCode(value) {
+  let hash = 0;
+  const text = String(value || "");
+  for (let index = 0; index < text.length; index += 1) {
+    hash = (hash * 31 + text.charCodeAt(index)) | 0;
+  }
+  return hash;
 }
 
 function applyStoredChecks() {
@@ -225,7 +456,7 @@ function updateStepFocus(shouldScroll) {
   }
 
   if (shouldScroll) {
-    current.item.scrollIntoView({ behavior: "smooth", block: "center" });
+    current.item.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 }
 
@@ -293,6 +524,7 @@ function findFirstIncompleteStep() {
 function loadState() {
   const initial = {
     cookMode: false,
+    visualsOpen: false,
     currentStep: 0,
     checks: { ingredients: {}, mise: {}, steps: {} },
   };
@@ -304,6 +536,7 @@ function loadState() {
     const parsed = JSON.parse(raw);
     return {
       cookMode: Boolean(parsed?.cookMode),
+      visualsOpen: Boolean(parsed?.visualsOpen),
       currentStep: Number(parsed?.currentStep || 0),
       checks: {
         ingredients: normalizeCheckMap(parsed?.checks?.ingredients),

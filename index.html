@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MiseFlow | Recipe Normalizer</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <p class="eyebrow">Cook Faster, Think Less</p>
+        <h1>MiseFlow Recipe Normalizer</h1>
+        <p class="hero-copy">
+          Ingest recipes from links, videos, or your own notes. Convert everything to
+          one clear format with mise en place, bowl consolidation, checklists, and
+          source citations.
+        </p>
+      </header>
+
+      <section class="panel auth-panel">
+        <h2>Account</h2>
+        <p class="tiny-note">
+          Sign in to keep recipes in account-backed storage instead of only this browser.
+        </p>
+        <div class="auth-grid">
+          <label for="authName">Name</label>
+          <input id="authName" placeholder="Alex Cook" />
+
+          <label for="authEmail">Email</label>
+          <input id="authEmail" type="email" placeholder="you@example.com" />
+
+          <label for="authPassword">Password</label>
+          <input id="authPassword" type="password" placeholder="8+ characters" />
+        </div>
+        <div class="button-row tight">
+          <button id="registerBtn" class="btn btn-secondary" type="button">Create Account</button>
+          <button id="loginBtn" class="btn btn-primary" type="button">Login</button>
+          <button id="logoutBtn" class="btn btn-ghost" type="button">Logout</button>
+        </div>
+        <p id="authStatus" class="status-line" aria-live="polite"></p>
+      </section>
+
+      <main class="workspace-grid">
+        <section class="panel intake-panel">
+          <h2>1. Intake</h2>
+          <form id="recipeForm">
+            <label for="title">Recipe Title</label>
+            <input id="title" name="title" placeholder="Weeknight Chili Crunch Pasta" required />
+
+            <label for="author">Original Author</label>
+            <input id="author" name="author" placeholder="Chef name, creator, or publication" />
+
+            <label for="sourceType">Source Type</label>
+            <select id="sourceType" name="sourceType">
+              <option value="web">Website Article</option>
+              <option value="youtube">YouTube Video</option>
+              <option value="manual">My Own Recipe</option>
+            </select>
+
+            <label for="sourceUrl">Source URL</label>
+            <input id="sourceUrl" name="sourceUrl" type="url" placeholder="https://..." />
+
+            <label for="imageUrl">Image URL</label>
+            <input id="imageUrl" name="imageUrl" type="url" placeholder="https://.../photo.jpg" />
+
+            <label for="servings">Servings</label>
+            <input id="servings" name="servings" type="number" min="1" step="1" value="4" />
+
+            <label for="ingredientsRaw">Raw Ingredients (one per line)</label>
+            <textarea
+              id="ingredientsRaw"
+              name="ingredientsRaw"
+              rows="8"
+              placeholder="1 lb spaghetti&#10;2 tbsp olive oil&#10;4 cloves garlic, minced"
+              required
+            ></textarea>
+
+            <label for="stepsRaw">Raw Steps (one per line)</label>
+            <textarea
+              id="stepsRaw"
+              name="stepsRaw"
+              rows="9"
+              placeholder="1. Bring salted water to a boil&#10;2. Cook pasta until al dente"
+              required
+            ></textarea>
+
+            <label for="creditNotes">Credit Notes</label>
+            <textarea
+              id="creditNotes"
+              name="creditNotes"
+              rows="3"
+              placeholder="Adapted with timing and bowl plan adjustments."
+            ></textarea>
+
+            <div class="button-row">
+              <button type="submit" class="btn btn-primary">Normalize Recipe</button>
+              <button type="button" id="importSource" class="btn btn-secondary">Import from URL</button>
+              <button type="button" id="loadSample" class="btn btn-secondary">Load Demo</button>
+              <button type="reset" id="clearForm" class="btn btn-ghost">Clear</button>
+            </div>
+            <p id="importStatus" class="status-line" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <section class="panel output-panel">
+          <h2>2. Standardized Recipe</h2>
+          <article id="recipeSummary" class="summary-card empty">
+            <h3>Your normalized recipe appears here</h3>
+            <p>Paste a recipe source and click <strong>Normalize Recipe</strong>.</p>
+          </article>
+
+          <div class="image-wrap" id="imageWrap" hidden>
+            <img id="recipeImage" alt="Recipe preview" />
+          </div>
+
+          <section class="subsection">
+            <h3>Ingredients</h3>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Qty</th>
+                    <th>Unit</th>
+                    <th>Ingredient</th>
+                    <th>Prep</th>
+                    <th>First Step</th>
+                    <th>Bowl</th>
+                  </tr>
+                </thead>
+                <tbody id="ingredientsTableBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="subsection">
+            <h3>Mise en Place Checklist</h3>
+            <ul id="miseList" class="checklist"></ul>
+          </section>
+
+          <section class="subsection">
+            <h3>Bowl Consolidation Plan</h3>
+            <div id="bowlPlan" class="bowl-grid"></div>
+            <div id="separateItems" class="separate-items"></div>
+          </section>
+        </section>
+
+        <section class="panel ops-panel">
+          <h2>3. Cook + Publish</h2>
+
+          <section class="subsection">
+            <h3>Cooking Checklist</h3>
+            <ol id="stepsChecklist" class="steps-list"></ol>
+          </section>
+
+          <section class="subsection">
+            <h3>Shopping List</h3>
+            <div class="retailer-toolbar">
+              <select id="retailerSelect">
+                <option value="instacart">Instacart</option>
+                <option value="walmart">Walmart</option>
+                <option value="amazon">Amazon</option>
+              </select>
+              <button id="buildRetailerLinks" class="btn btn-secondary" type="button">
+                Build Retailer Cart Links
+              </button>
+            </div>
+            <div id="retailerLinks" class="retailer-links"></div>
+            <div id="shoppingList"></div>
+            <p class="tiny-note">
+              Live account cart APIs require retailer credentials; this build generates smart deep links now.
+            </p>
+          </section>
+
+          <section class="subsection">
+            <h3>Citation + Credit</h3>
+            <div id="citationBlock" class="citation"></div>
+          </section>
+
+          <section class="subsection">
+            <h3>Source Discovery</h3>
+            <div id="sourceDiscovery" class="discovery">
+              <p class="muted">Import a source URL to see discovered recipe links and transcript details.</p>
+            </div>
+          </section>
+
+          <section class="subsection">
+            <h3>Export</h3>
+            <div class="button-row tight">
+              <button id="copyMarkdown" class="btn btn-secondary" type="button">Copy Markdown</button>
+              <button id="copyJson" class="btn btn-secondary" type="button">Copy JSON</button>
+              <button id="saveRecipe" class="btn btn-primary" type="button">Save to Library</button>
+            </div>
+            <textarea id="markdownOutput" rows="10" readonly placeholder="Markdown export appears here"></textarea>
+          </section>
+        </section>
+      </main>
+
+      <section class="panel library-panel">
+        <h2>Recipe Library</h2>
+        <div class="library-toolbar">
+          <input id="librarySearch" placeholder="Search saved recipes..." />
+          <span id="libraryCount" class="pill">0 saved</span>
+        </div>
+        <div id="libraryList" class="library-grid"></div>
+      </section>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

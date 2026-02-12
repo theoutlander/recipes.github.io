@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "node --watch server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "build:static": "node scripts/build-static.js",
+    "publish:urls": "node scripts/publish-from-urls.js",
+    "fetch:sheet": "node scripts/fetch-sheet-urls.js"
   },
   "dependencies": {
     "cheerio": "^1.1.0",

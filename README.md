@@ -1,83 +1,101 @@
-# MiseFlow Recipe Normalizer
+# MiseFlow Static Recipe Publisher
 
-MiseFlow is a recipe-tracking web app that standardizes recipes from:
+This project is now a **local publishing pipeline + static public site**:
 
-- Any web recipe URL
-- YouTube videos
-- Your own raw recipe notes
+- Backend runs ephemerally (locally or inside GitHub Actions) for extraction/build steps
+- Public output is static HTML/JSON for GitHub Pages
+- No public login, no admin UI required
 
-It converts everything into a cooking-first format with:
+## Architecture
 
-- Structured ingredients + steps
-- Mise en place checklist
-- Bowl consolidation plan (reduce unnecessary bowls)
-- Cooking step checklist
-- Shopping list grouped by category
-- Account-backed recipe storage (register/login)
-- Retailer cart-link packs (Instacart, Walmart, Amazon)
-- Citation and credit block for original sources
-- Markdown/JSON export plus local fallback library
+- Local backend: `server.js`
+  - URL extraction (`/api/extract`)
+  - Static publish/rebuild (`/api/admin/publish`, `/api/admin/rebuild`)
+- Local batch tool: `scripts/publish-from-urls.js`
+- Static public site:
+  - `index.html`, `site.css`, `site.js`
+  - `recipes/*.html`, `recipes/index.json`
+  - `sitemap.xml`, `robots.txt`
 
-## How Source Import Works
+## Workflow (Recommended)
 
-1. Paste a source URL.
-2. Click `Import from URL`.
-3. The backend tries, in order:
-   - JSON-LD recipe schema extraction (best quality)
-   - HTML section heuristics (`Ingredients`, `Instructions`, etc.)
-   - For YouTube: recipe links in description
-   - For YouTube: transcript-based fallback heuristics
-4. It auto-fills the form, then normalizes into the MiseFlow format.
-
-## Local Development
+1. Add URLs to `content/source-urls.txt` (one per line)
+2. Start local backend:
 
 ```bash
-npm install
 npm run dev
 ```
 
-Then open:
+3. In another terminal, publish from URLs:
 
-`http://localhost:3030`
+```bash
+ADMIN_KEY=dev-admin-key npm run publish:urls -- --file content/source-urls.txt
+```
 
-## Account-Backed Storage
+4. Commit generated static files and push to GitHub Pages.
 
-- Create an account from the `Account` panel.
-- Login stores an auth token in browser local storage.
-- Saved recipes are persisted server-side in `data/store.json` under your account.
-- If logged out, the app falls back to browser-only storage.
+## Fully Automatic URL Inbox (No Manual Runs)
 
-## Retailer Integrations
+If you want “add URL and it appears on the site”:
 
-- `Build Retailer Cart Links` generates cart-search packs for:
-  - Instacart
-  - Walmart
-  - Amazon
-- Per-ingredient quick links are available in the shopping list.
-- This version uses deep links. Direct one-click checkout requires partner API credentials.
+1. Create a Google Sheet with one URL per row.
+2. Publish the sheet as CSV (or use an accessible CSV export URL).
+3. Set GitHub repository secrets:
+   - `URL_INBOX_CSV_URL` (sheet CSV URL)
+   - `ADMIN_KEY` (same key used by publish endpoints)
+4. Optional repo variable:
+   - `SITE_URL` (your GitHub Pages URL)
+5. Enable workflow:
+   - `.github/workflows/publish-from-sheet.yml`
 
-## Is AI Involved In Parsing?
+The workflow runs every 5 minutes (and can run manually), starts backend in CI, pulls URLs, publishes new recipes, rebuilds static pages, and commits output to the repo.
 
-Current parsing is deterministic and rule-based, not LLM-driven:
+## Commands
 
-- JSON-LD recipe schema extraction
+- `npm run dev`: run local backend
+- `npm run build:static`: rebuild static pages from `content/recipes/*.json`
+- `npm run publish:urls`: extract + normalize + publish from URL list
+- `npm run fetch:sheet`: pull URL list from sheet CSV into `content/source-urls.txt`
+
+Optional args for batch publish:
+
+- `--file <path>` URL list file
+- `--api <baseUrl>` API base (default `http://localhost:3030`)
+- `--key <adminKey>` admin key
+- `--servings <n>` default servings for imported recipes
+- `--limit <n>` max URLs per run (default `50`)
+- `--republish` force republish even if source URL already exists
+
+## Environment
+
+Set locally when publishing:
+
+```bash
+export ADMIN_KEY="your-local-publish-key"
+export SITE_URL="https://<your-github-pages-domain>"
+export URL_INBOX_CSV_URL="https://docs.google.com/spreadsheets/d/<id>/export?format=csv&gid=<gid>"
+```
+
+`SITE_URL` is used for canonical URLs and sitemap output.
+
+## Public Deployment
+
+Only publish static assets to GitHub Pages:
+
+- `index.html`
+- `site.css`
+- `site.js`
+- `recipe.css`
+- `recipes/`
+- `sitemap.xml`
+- `robots.txt`
+
+Backend is not deployed.
+
+## Parsing Method
+
+Extraction is deterministic (non-LLM):
+
+- JSON-LD recipe schema parsing
 - HTML heading/list heuristics
-- YouTube description link discovery
-- YouTube transcript heuristics
-
-This keeps extraction transparent and predictable. You can add an optional AI cleanup step later for instruction rewriting and ingredient normalization.
-
-## Project Files
-
-- `/Users/nickkarnik/gh/recipes/server.js`: extractor API + static host
-- `/Users/nickkarnik/gh/recipes/store.js`: account/session/recipe persistence
-- `/Users/nickkarnik/gh/recipes/index.html`: app structure
-- `/Users/nickkarnik/gh/recipes/styles.css`: visual system
-- `/Users/nickkarnik/gh/recipes/app.js`: normalization logic + rendering + library
-
-## Notes and Limits
-
-- Some sites block scraping or hide content behind scripts/paywalls.
-- Some YouTube videos do not expose transcripts.
-- YouTube parsing is heuristic unless linked recipe pages are available.
-- Retailer deep links are not true transactional carts yet; production checkout needs retailer partner APIs.
+- YouTube description/link/transcript heuristics

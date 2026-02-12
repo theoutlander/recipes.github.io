@@ -1,0 +1,99 @@
+.recipe-shell {
+  width: min(980px, 94vw);
+  margin: 1.6rem auto 3rem;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 0.8rem;
+  color: #0d6358;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.recipe-head {
+  border: 1px solid #d8ccb6;
+  border-radius: 18px;
+  background: #fffaf3;
+  padding: 1rem;
+  box-shadow: 0 18px 44px -30px rgba(35, 28, 12, 0.42);
+}
+
+.source-pill {
+  margin: 0;
+  display: inline-block;
+  border-radius: 999px;
+  background: #eaf5f3;
+  border: 1px solid #9ec4bc;
+  padding: 0.22rem 0.6rem;
+  color: #0e6458;
+  font-weight: 700;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.recipe-head h1 {
+  margin-top: 0.55rem;
+  font-size: clamp(1.8rem, 3.4vw, 2.7rem);
+}
+
+.meta-line {
+  margin: 0.5rem 0 0;
+  color: #685f52;
+}
+
+.recipe-head img {
+  width: 100%;
+  margin-top: 0.8rem;
+  border-radius: 14px;
+  border: 1px solid #dbcdb6;
+  max-height: 390px;
+  object-fit: cover;
+}
+
+.recipe-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.72rem;
+  margin-top: 0.85rem;
+}
+
+.card {
+  margin-top: 0.75rem;
+  border: 1px solid #decfb9;
+  border-radius: 15px;
+  background: #fffdf9;
+  padding: 0.8rem;
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.card ul,
+.card ol {
+  margin: 0.6rem 0 0;
+  padding-left: 1.05rem;
+  color: #443d32;
+}
+
+.card li {
+  margin-top: 0.36rem;
+  line-height: 1.38;
+}
+
+.credit-card a {
+  color: #0e6458;
+}
+
+@media (max-width: 780px) {
+  .recipe-grid {
+    grid-template-columns: 1fr;
+  }
+}

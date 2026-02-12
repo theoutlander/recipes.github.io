@@ -1,0 +1,70 @@
+name: Publish Recipes From URL Inbox
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-recipes
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Pull URL Inbox
+        env:
+          URL_INBOX_CSV_URL: ${{ secrets.URL_INBOX_CSV_URL }}
+        run: node scripts/fetch-sheet-urls.js --out content/source-urls.txt
+
+      - name: Start Local Backend
+        env:
+          ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          node server.js > /tmp/miseflow-server.log 2>&1 &
+          echo $! > /tmp/miseflow-server.pid
+          sleep 3
+
+      - name: Publish URLs
+        env:
+          ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
+        run: npm run publish:urls -- --file content/source-urls.txt --api http://localhost:3030 --limit 25
+
+      - name: Stop Local Backend
+        if: always()
+        run: |
+          if [ -f /tmp/miseflow-server.pid ]; then
+            kill "$(cat /tmp/miseflow-server.pid)" || true
+          fi
+
+      - name: Rebuild Static Files
+        run: npm run build:static
+
+      - name: Commit And Push If Changed
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add content/recipes content/source-urls.txt recipes sitemap.xml
+            git commit -m "chore: auto-publish recipes from URL inbox"
+            git push
+          else
+            echo "No changes to commit."
+          fi

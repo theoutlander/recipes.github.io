@@ -1,97 +1,45 @@
 import express from "express";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as cheerio from "cheerio";
 import { YoutubeTranscript } from "youtube-transcript";
-import {
-  createSession,
-  createUser,
-  deleteRecipeForUser,
-  getUserByToken,
-  initStore,
-  listRecipesByUser,
-  loginUser,
-  revokeSession,
-  saveRecipeForUser,
-} from "./store.js";
+import { buildRecipeSummary, buildStaticSite, normalizeRecipeForPublish } from "./static-site.js";
 
 const PORT = Number(process.env.PORT || 3030);
+const CORS_ORIGIN = String(process.env.CORS_ORIGIN || "*");
 const USER_AGENT =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
 const REQUEST_TIMEOUT_MS = 14000;
+const ADMIN_KEY = String(process.env.ADMIN_KEY || "dev-admin-key");
+const SITE_URL = String(process.env.SITE_URL || "");
+const CONTENT_RECIPES_DIR = path.join(process.cwd(), "content", "recipes");
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-initStore();
+ensureDir(CONTENT_RECIPES_DIR);
+buildStaticSite({ siteUrl: SITE_URL });
 
 app.use(express.json({ limit: "1mb" }));
-app.use(express.static(__dirname));
-
-app.post("/api/auth/register", (req, res) => {
-  try {
-    const user = createUser({
-      name: req.body?.name,
-      email: req.body?.email,
-      password: req.body?.password,
-    });
-    const session = createSession(user.id);
-    res.status(201).json({ ok: true, user, token: session.token });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Registration failed.";
-    const status = /already exists/i.test(message) ? 409 : 400;
-    res.status(status).json({ ok: false, error: message });
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (CORS_ORIGIN === "*") {
+    res.header("Access-Control-Allow-Origin", "*");
+  } else if (origin && origin === CORS_ORIGIN) {
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Vary", "Origin");
   }
-});
-
-app.post("/api/auth/login", (req, res) => {
-  try {
-    const user = loginUser({
-      email: req.body?.email,
-      password: req.body?.password,
-    });
-    const session = createSession(user.id);
-    res.json({ ok: true, user, token: session.token });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Login failed.";
-    res.status(401).json({ ok: false, error: message });
-  }
-});
-
-app.post("/api/auth/logout", requireAuth, (req, res) => {
-  revokeSession(req.authToken || "");
-  res.json({ ok: true });
-});
-
-app.get("/api/auth/me", requireAuth, (req, res) => {
-  res.json({ ok: true, user: req.authUser });
-});
-
-app.get("/api/recipes", requireAuth, (req, res) => {
-  const recipes = listRecipesByUser(req.authUser.id);
-  res.json({ ok: true, recipes });
-});
-
-app.post("/api/recipes", requireAuth, (req, res) => {
-  try {
-    const saved = saveRecipeForUser(req.authUser.id, req.body?.recipe);
-    res.json({ ok: true, recipe: saved });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Recipe save failed.";
-    res.status(400).json({ ok: false, error: message });
-  }
-});
-
-app.delete("/api/recipes/:id", requireAuth, (req, res) => {
-  const recipeId = (req.params.id || "").trim();
-  if (!recipeId) {
-    res.status(400).json({ ok: false, error: "Recipe id is required." });
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, x-admin-key");
+  res.header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+  if (req.method === "OPTIONS") {
+    res.status(204).end();
     return;
   }
-  const deleted = deleteRecipeForUser(req.authUser.id, recipeId);
-  res.json({ ok: true, deleted });
+  next();
 });
+app.use(express.static(__dirname));
 
 app.post("/api/retailers/cart-links", (req, res) => {
   try {
@@ -116,6 +64,45 @@ app.post("/api/retailers/cart-links", (req, res) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Retailer integration failed.";
     res.status(400).json({ ok: false, error: message });
+  }
+});
+
+app.post("/api/admin/publish", requireAdmin, (req, res) => {
+  try {
+    const recipe = req.body?.recipe;
+    if (!recipe || typeof recipe !== "object") {
+      res.status(400).json({ ok: false, error: "Recipe payload is required." });
+      return;
+    }
+
+    const normalized = normalizeRecipeForPublish(recipe);
+    ensureDir(CONTENT_RECIPES_DIR);
+    const filePath = path.join(CONTENT_RECIPES_DIR, `${normalized.meta.slug}.json`);
+    fs.writeFileSync(filePath, JSON.stringify(normalized, null, 2));
+
+    const result = buildStaticSite({ siteUrl: SITE_URL });
+    const summary = buildRecipeSummary(normalized);
+
+    res.json({
+      ok: true,
+      recipe: normalized,
+      summary,
+      publicUrl: summary.url,
+      totalPublished: result.count,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Publish failed.";
+    res.status(500).json({ ok: false, error: message });
+  }
+});
+
+app.post("/api/admin/rebuild", requireAdmin, (req, res) => {
+  try {
+    const result = buildStaticSite({ siteUrl: SITE_URL });
+    res.json({ ok: true, totalPublished: result.count });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Rebuild failed.";
+    res.status(500).json({ ok: false, error: message });
   }
 });
 
@@ -163,31 +150,21 @@ app.listen(PORT, () => {
   process.stdout.write(`MiseFlow running at http://localhost:${PORT}\n`);
 });
 
-function requireAuth(req, res, next) {
-  const token = extractAuthToken(req.headers.authorization);
-  if (!token) {
-    res.status(401).json({ ok: false, error: "Authentication required." });
+function requireAdmin(req, res, next) {
+  const headerKey = String(req.headers["x-admin-key"] || "").trim();
+  const bodyKey = String(req.body?.adminKey || "").trim();
+  const key = headerKey || bodyKey;
+  if (!key || key !== ADMIN_KEY) {
+    res.status(401).json({ ok: false, error: "Invalid admin key." });
     return;
   }
-  const user = getUserByToken(token);
-  if (!user) {
-    res.status(401).json({ ok: false, error: "Session expired or invalid." });
-    return;
-  }
-  req.authUser = user;
-  req.authToken = token;
   next();
 }
 
-function extractAuthToken(headerValue) {
-  if (typeof headerValue !== "string") {
-    return "";
+function ensureDir(dirPath) {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
   }
-  const trimmed = headerValue.trim();
-  if (!trimmed.toLowerCase().startsWith("bearer ")) {
-    return "";
-  }
-  return trimmed.slice(7).trim();
 }
 
 function normalizeIngredientName(value) {

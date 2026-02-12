@@ -1,0 +1,58 @@
+{
+  "meta": {
+    "title": "Butter Chicken Recipe | How to make Butter Chicken at home | Chicken Makhani | Chef Sanjyot Keer",
+    "author": "Your Food Lab",
+    "sourceType": "youtube",
+    "sourceUrl": "https://www.youtube.com/watch?v=RKNogWbAivY&list=PLzKmUbgKL1TSDSUkA5TofHCzvw7KWi8x2&index=20",
+    "servings": 4,
+    "imageUrl": "https://i.ytimg.com/vi/RKNogWbAivY/hqdefault.jpg",
+    "creditNotes": "Adapted from YouTube creator Your Food Lab. Keep original creator credit.",
+    "slug": "butter-chicken-recipe-how-to-make-butter-chicken-at-home-chicken-makhani-chef-sa",
+    "publishedAt": "2026-02-12T08:30:48.612Z",
+    "sourceFingerprint": "0b799adf6785fcd20d1bc14f8bcf6a047ceaa016816c261a294522033c7d33ac",
+    "sourceLastCheckedAt": "2026-02-12T08:30:48.576Z",
+    "normalizedAt": "2026-02-12T08:30:48.576Z",
+    "updatedAt": "2026-02-12T08:30:48.792Z"
+  },
+  "ingredients": [],
+  "steps": [
+    "Open the original video and follow the creator's demonstrated method.",
+    "Watch: https://www.youtube.com/watch?v=RKNogWbAivY&list=PLzKmUbgKL1TSDSUkA5TofHCzvw7KWi8x2&index=20",
+    "Reference: https://www.youtube.com/watch?v=RKNogWbAivY"
+  ],
+  "bowls": [],
+  "separate": [],
+  "mise": [
+    "Gather all ingredients and cooking tools."
+  ],
+  "shopping": {},
+  "citation": {
+    "sourceType": "YouTube Video",
+    "sourceUrl": "https://www.youtube.com/watch?v=RKNogWbAivY&list=PLzKmUbgKL1TSDSUkA5TofHCzvw7KWi8x2&index=20",
+    "author": "Your Food Lab",
+    "capturedOn": "2/12/2026",
+    "creditLine": "Adapted from YouTube creator Your Food Lab. Keep original creator credit.",
+    "extractionMethod": "youtube-description-heuristics",
+    "references": [
+      "https://www.youtube.com/watch?v=RKNogWbAivY&list=PLzKmUbgKL1TSDSUkA5TofHCzvw7KWi8x2&index=20",
+      "https://www.youtube.com/watch?v=RKNogWbAivY"
+    ]
+  },
+  "discovery": {
+    "method": "youtube-description-heuristics",
+    "detectedType": "youtube",
+    "transcriptAvailable": false,
+    "recipeLinks": [
+      "https://www.youtube.com/watch?v=RKNogWbAivY"
+    ],
+    "notes": [
+      "No recipe links detected in video description.",
+      "Transcript unavailable for this video."
+    ]
+  },
+  "checkState": {
+    "mise": {},
+    "steps": {},
+    "shopping": {}
+  }
+}

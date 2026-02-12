@@ -1,6 +1,17 @@
 {
-  "updatedAt": "2026-02-12T08:14:01.817Z",
+  "updatedAt": "2026-02-12T08:30:48.794Z",
   "recipes": [
+    {
+      "slug": "butter-chicken-recipe-how-to-make-butter-chicken-at-home-chicken-makhani-chef-sa",
+      "title": "Butter Chicken Recipe | How to make Butter Chicken at home | Chicken Makhani | Chef Sanjyot Keer",
+      "author": "Your Food Lab",
+      "imageUrl": "https://i.ytimg.com/vi/RKNogWbAivY/hqdefault.jpg",
+      "sourceType": "youtube",
+      "sourceLabel": "YouTube Video",
+      "description": "Open the original video and follow the creator's demonstrated method.",
+      "updatedAt": "2026-02-12T08:30:48.792Z",
+      "url": "recipes/butter-chicken-recipe-how-to-make-butter-chicken-at-home-chicken-makhani-chef-sa.html"
+    },
     {
       "slug": "panera-s-broccoli-cheddar-soup",
       "title": "Panera's Broccoli Cheddar Soup",
@@ -9,7 +20,7 @@
       "sourceType": "web",
       "sourceLabel": "Web Article",
       "description": "Met the 1/4 cup butter and sautee the onions on the stove-top until soft. Sprinkle the flour over the mixture. Cook and stir over medium heat for 1-2 minutes.",
-      "updatedAt": "2026-02-12T08:14:01.815Z",
+      "updatedAt": "2026-02-12T08:30:48.793Z",
       "url": "recipes/panera-s-broccoli-cheddar-soup.html"
     }
   ]

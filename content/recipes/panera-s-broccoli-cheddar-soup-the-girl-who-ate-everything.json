@@ -7,46 +7,239 @@
     "servings": 4,
     "imageUrl": "https://www.the-girl-who-ate-everything.com/wp-content/uploads/2015/09/panera-broccoli-soup-4-300x300.jpg",
     "creditNotes": "Adapted from www.the-girl-who-ate-everything.com. Keep attribution to the original creator.",
-    "normalizedAt": "2026-02-12T04:57:06.704Z",
     "slug": "panera-s-broccoli-cheddar-soup-the-girl-who-ate-everything",
-    "updatedAt": "2026-02-12T07:07:11.435Z",
-    "publishedAt": "2026-02-12T04:57:06.745Z"
+    "publishedAt": "2026-02-12T05:48:35.789Z",
+    "sourceFingerprint": "6a258561c4c55ba8e50b6320fe97e4636de7cca5ddc65e38c8c5d2e10616d3c6",
+    "sourceLastCheckedAt": "2026-02-12T05:49:29.795Z",
+    "normalizedAt": "2026-02-12T05:49:29.795Z",
+    "updatedAt": "2026-02-12T07:13:50.182Z"
   },
   "ingredients": [
     {
       "id": "ing-0",
-      "raw": "1/4 cup butter1/2 medium chopped onion1/4 cup flour2 cups half-and-half cream2 cups low-sodium chicken stock or broth1/2 lb broccoli, (about 3 cups), chopped into bite size pieces1 cup carrot, julienned (can buy matchstick carrots in produce section)1/8 teaspoon nutmeg, (optional but brings out the flavor)8 ounces grated sharp cheddar cheese, (2 cups)salt and pepper",
+      "raw": "1/4 cup butter",
       "quantity": "1/4",
       "unit": "cup",
-      "name": "cup",
+      "name": "butter",
       "prep": "",
       "firstStep": 0,
       "bowl": "",
+      "category": "Dairy"
+    },
+    {
+      "id": "ing-1",
+      "raw": "1/2 medium chopped onion",
+      "quantity": "1/2",
+      "unit": "",
+      "name": "medium chopped onion",
+      "prep": "chopped",
+      "firstStep": 0,
+      "bowl": "",
+      "category": "Produce"
+    },
+    {
+      "id": "ing-2",
+      "raw": "1/4 cup flour",
+      "quantity": "1/4",
+      "unit": "cup",
+      "name": "flour",
+      "prep": "",
+      "firstStep": 0,
+      "bowl": "",
+      "category": "Pantry"
+    },
+    {
+      "id": "ing-3",
+      "raw": "2 cups half-and-half cream",
+      "quantity": "2",
+      "unit": "cups",
+      "name": "half-and-half cream",
+      "prep": "",
+      "firstStep": 1,
+      "bowl": "",
+      "category": "Dairy"
+    },
+    {
+      "id": "ing-4",
+      "raw": "2 cups low-sodium chicken stock or broth",
+      "quantity": "2",
+      "unit": "cups",
+      "name": "low-sodium chicken stock or broth",
+      "prep": "",
+      "firstStep": 1,
+      "bowl": "",
+      "category": "Protein"
+    },
+    {
+      "id": "ing-5",
+      "raw": "1/2 lb broccoli, (about 3 cups), chopped into bite size pieces",
+      "quantity": "1/2",
+      "unit": "lb",
+      "name": "broccoli",
+      "prep": "(about 3 cups), chopped into bite size pieces",
+      "firstStep": 2,
+      "bowl": "",
       "category": "Other"
+    },
+    {
+      "id": "ing-6",
+      "raw": "1 cup carrot, julienned (can buy matchstick carrots in produce section)",
+      "quantity": "1",
+      "unit": "cup",
+      "name": "carrot",
+      "prep": "julienned (can buy matchstick carrots in produce section)",
+      "firstStep": 2,
+      "bowl": "",
+      "category": "Produce"
+    },
+    {
+      "id": "ing-7",
+      "raw": "1/8 teaspoon nutmeg, (optional but brings out the flavor)",
+      "quantity": "1/8",
+      "unit": "teaspoon",
+      "name": "nutmeg",
+      "prep": "(optional but brings out the flavor)",
+      "firstStep": 3,
+      "bowl": "",
+      "category": "Other"
+    },
+    {
+      "id": "ing-8",
+      "raw": "8 ounces grated sharp cheddar cheese, (2 cups)",
+      "quantity": "8",
+      "unit": "ounces",
+      "name": "grated sharp cheddar cheese",
+      "prep": "(2 cups)",
+      "firstStep": 3,
+      "bowl": "",
+      "category": "Dairy"
+    },
+    {
+      "id": "ing-9",
+      "raw": "salt and pepper",
+      "quantity": "",
+      "unit": "",
+      "name": "salt and pepper",
+      "prep": "",
+      "firstStep": 3,
+      "bowl": "",
+      "category": "Produce"
     }
   ],
   "steps": [
-    "Melt the 1/4 cup butter and sautee the 1/2 medium chopped onion in the butter until soft. Sprinkle the 1/4 cup flour over the mixture. Cook and stir over medium heat for 1-2 minutes.Whisk in the 2 cups half-and-half cream and 2 cups low-sodium chicken stock or broth. Bring to a boil then reduce heat to medium.Add the 1/2 lb broccoli and 1 cup carrot. Cook over medium-low heat for 20-25 minutes or until the broccoli and carrots are tender.Add salt and pepper. You can leave the soup chunky or blend about 1 cup of the soup and stir it in for a smoother soup (that's what I do). Return to low heat and add the 8 ounces grated sharp cheddar cheese. If your heat is too high your soup can get grainy. Stir in the nutmeg if desired.Serve with crusty bread."
+    "Melt the 1/4 cup butter and sautee the 1/2 medium chopped onion in the butter until soft. Sprinkle the 1/4 cup flour over the mixture. Cook and stir over medium heat for 1-2 minutes.",
+    "Whisk in the 2 cups half-and-half cream and 2 cups low-sodium chicken stock or broth. Bring to a boil then reduce heat to medium.",
+    "Add the 1/2 lb broccoli and 1 cup carrot. Cook over medium-low heat for 20-25 minutes or until the broccoli and carrots are tender.",
+    "Add salt and pepper. You can leave the soup chunky or blend about 1 cup of the soup and stir it in for a smoother soup (that's what I do). Return to low heat and add the 8 ounces grated sharp cheddar cheese. If your heat is too high your soup can get grainy. Stir in the nutmeg if desired.",
+    "Serve with crusty bread."
   ],
   "bowls": [
     {
       "name": "Bowl 1",
       "step": 1,
       "ingredients": [
-        "cup"
+        "butter",
+        "medium chopped onion",
+        "flour"
+      ]
+    },
+    {
+      "name": "Bowl 2",
+      "step": 2,
+      "ingredients": [
+        "half-and-half cream",
+        "low-sodium chicken stock or broth"
+      ]
+    },
+    {
+      "name": "Bowl 3",
+      "step": 3,
+      "ingredients": [
+        "broccoli",
+        "carrot"
+      ]
+    },
+    {
+      "name": "Bowl 4",
+      "step": 4,
+      "ingredients": [
+        "nutmeg",
+        "grated sharp cheddar cheese",
+        "salt and pepper"
       ]
     }
   ],
   "separate": [],
   "mise": [
-    "Stage Bowl 1: cup before Step 1"
+    "Chopped medium chopped onion",
+    "(about 3 cups), chopped into bite size pieces broccoli",
+    "Julienned (can buy matchstick carrots in produce section) carrot",
+    "(optional but brings out the flavor) nutmeg",
+    "(2 cups) grated sharp cheddar cheese",
+    "Stage Bowl 1: butter, medium chopped onion, flour before Step 1",
+    "Stage Bowl 2: half-and-half cream, low-sodium chicken stock or broth before Step 2",
+    "Stage Bowl 3: broccoli, carrot before Step 3",
+    "Stage Bowl 4: nutmeg, grated sharp cheddar cheese, salt and pepper before Step 4"
   ],
   "shopping": {
-    "Other": [
+    "Dairy": [
       {
-        "name": "cup",
+        "name": "butter",
         "unit": "cup",
         "quantityText": "1/4"
+      },
+      {
+        "name": "half-and-half cream",
+        "unit": "cups",
+        "quantityText": "2"
+      },
+      {
+        "name": "grated sharp cheddar cheese",
+        "unit": "ounces",
+        "quantityText": "8"
+      }
+    ],
+    "Produce": [
+      {
+        "name": "medium chopped onion",
+        "unit": "",
+        "quantityText": "1/2"
+      },
+      {
+        "name": "carrot",
+        "unit": "cup",
+        "quantityText": "1"
+      },
+      {
+        "name": "salt and pepper",
+        "unit": "",
+        "quantityText": ""
+      }
+    ],
+    "Pantry": [
+      {
+        "name": "flour",
+        "unit": "cup",
+        "quantityText": "1/4"
+      }
+    ],
+    "Protein": [
+      {
+        "name": "low-sodium chicken stock or broth",
+        "unit": "cups",
+        "quantityText": "2"
+      }
+    ],
+    "Other": [
+      {
+        "name": "broccoli",
+        "unit": "lb",
+        "quantityText": "1/2"
+      },
+      {
+        "name": "nutmeg",
+        "unit": "teaspoon",
+        "quantityText": "1/8"
       }
     ]
   },
@@ -54,22 +247,22 @@
     "sourceType": "Web Article",
     "sourceUrl": "https://www.the-girl-who-ate-everything.com/wprm_print/paneras-broccoli-cheddar-soup-2",
     "author": "",
-    "capturedOn": "2/12/2026",
+    "capturedOn": "2/11/2026",
     "creditLine": "Adapted from www.the-girl-who-ate-everything.com. Keep attribution to the original creator.",
-    "extractionMethod": "html-heuristics",
+    "extractionMethod": "wprm-structured-html",
     "references": [
       "https://www.the-girl-who-ate-everything.com/wprm_print/paneras-broccoli-cheddar-soup-2"
     ]
   },
   "discovery": {
-    "method": "html-heuristics",
+    "method": "wprm-structured-html",
     "detectedType": "web",
     "transcriptAvailable": false,
     "recipeLinks": [
       "https://www.the-girl-who-ate-everything.com/wprm_print/paneras-broccoli-cheddar-soup-2"
     ],
     "notes": [
-      "Used heading and list heuristics."
+      "Parsed using WP Recipe Maker structured markup."
     ]
   },
   "checkState": {

@@ -257,7 +257,9 @@ async function extractFromWeb(url) {
   if (parsed.steps.length === 0) {
     notes.push("No clear instruction section detected.");
   }
-  if (parsed.usedJsonLd) {
+  if (parsed.usedWprm) {
+    notes.push("Parsed using WP Recipe Maker structured markup.");
+  } else if (parsed.usedJsonLd) {
     notes.push("Recipe schema (JSON-LD) was used.");
   } else {
     notes.push("Used heading and list heuristics.");
@@ -270,7 +272,7 @@ async function extractFromWeb(url) {
 
   return {
     detectedType: "web",
-    method: parsed.usedJsonLd ? "jsonld-recipe" : "html-heuristics",
+    method: parsed.usedWprm ? "wprm-structured-html" : parsed.usedJsonLd ? "jsonld-recipe" : "html-heuristics",
     title: parsed.title,
     author: parsed.author,
     imageUrl: parsed.imageUrl,
@@ -286,6 +288,7 @@ async function extractFromWeb(url) {
 function parseRecipeFromHtml(html, baseUrl) {
   const $ = cheerio.load(html);
   const linkedData = extractRecipeFromJsonLd($);
+  const wprmData = extractFromWprm($);
 
   let title = linkedData.title || readMetaValue($, "property", "og:title") || readMetaValue($, "name", "twitter:title");
   let author = linkedData.author || readMetaValue($, "name", "author");
@@ -304,8 +307,8 @@ function parseRecipeFromHtml(html, baseUrl) {
     imageUrl = $("img").first().attr("src") || "";
   }
 
-  let ingredients = linkedData.ingredients;
-  let steps = linkedData.steps;
+  let ingredients = wprmData.ingredients.length > 0 ? wprmData.ingredients : linkedData.ingredients;
+  let steps = wprmData.steps.length > 0 ? wprmData.steps : linkedData.steps;
 
   if (ingredients.length === 0) {
     ingredients = extractSectionByHeading($, ["ingredients"]);
@@ -325,11 +328,21 @@ function parseRecipeFromHtml(html, baseUrl) {
     }
   }
 
-  ingredients = cleanLines(ingredients, 80);
-  steps = cleanLines(
-    steps.map((line) => line.replace(/^\d+[\.\)\-\s]*/, "")),
-    80
-  );
+  if (wprmData.usedWprm) {
+    ingredients = cleanLines(ingredients, 120);
+    steps = cleanLines(
+      steps.map((line) => line.replace(/^\d+[\.\)\-\s]*/, "")),
+      120
+    );
+  } else {
+    ingredients = expandCollapsedIngredientLines(cleanLines(ingredients, 120));
+    steps = expandCollapsedStepLines(
+      cleanLines(
+        steps.map((line) => line.replace(/^\d+[\.\)\-\s]*/, "")),
+        120
+      )
+    );
+  }
 
   if (title) {
     title = decodeHtml(title);
@@ -348,6 +361,45 @@ function parseRecipeFromHtml(html, baseUrl) {
     ingredients,
     steps,
     usedJsonLd: linkedData.usedJsonLd,
+    usedWprm: wprmData.usedWprm,
+  };
+}
+
+function extractFromWprm($) {
+  const ingredientNodes = $(".wprm-recipe-ingredient").toArray();
+  const stepNodes = $(".wprm-recipe-instruction-text").toArray();
+
+  if (ingredientNodes.length === 0 && stepNodes.length === 0) {
+    return {
+      ingredients: [],
+      steps: [],
+      usedWprm: false,
+    };
+  }
+
+  const ingredients = ingredientNodes
+    .map((node) => {
+      const amount = $(node).find(".wprm-recipe-ingredient-amount").first().text().trim();
+      const unit = $(node).find(".wprm-recipe-ingredient-unit").first().text().trim();
+      const name = $(node).find(".wprm-recipe-ingredient-name").first().text().trim();
+      const notes = $(node).find(".wprm-recipe-ingredient-notes").first().text().trim();
+
+      const base = [amount, unit, name].filter(Boolean).join(" ").trim();
+      if (!base && !notes) {
+        return "";
+      }
+      return notes ? `${base}, ${notes}`.trim() : base;
+    })
+    .filter(Boolean);
+
+  const steps = stepNodes
+    .map((node) => $(node).text().trim())
+    .filter(Boolean);
+
+  return {
+    ingredients,
+    steps,
+    usedWprm: ingredients.length > 0 || steps.length > 0,
   };
 }
 
@@ -905,6 +957,54 @@ function cleanLines(lines, limit = 60) {
     }
   }
   return cleaned;
+}
+
+function expandCollapsedIngredientLines(lines) {
+  const output = [];
+  for (const line of lines) {
+    const expanded = splitCollapsedIngredientLine(line);
+    output.push(...expanded);
+  }
+  return cleanLines(output, 120);
+}
+
+function splitCollapsedIngredientLine(line) {
+  const normalized = sanitizeLine(line);
+  if (!normalized) {
+    return [];
+  }
+
+  const quantityBoundary = /(?=\b(?:\d+\s+\d+\/\d+|\d+\/\d+|\d*\.?\d+)\s*(?:cups?|cup|tablespoons?|tbsp|teaspoons?|tsp|pounds?|lbs?|lb|ounces?|oz|grams?|g|kilograms?|kg|ml|l|cloves?|clove|cans?|can|packages?|package|pkg|pinch|dash|slices?|slice|medium|small|large|egg|eggs)\b)/gi;
+  const pieces = normalized
+    .replace(/([a-zA-Z\)])(\d)/g, "$1 $2")
+    .split(quantityBoundary)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (pieces.length > 1) {
+    return pieces;
+  }
+
+  return [normalized];
+}
+
+function expandCollapsedStepLines(lines) {
+  const output = [];
+  for (const line of lines) {
+    const normalized = sanitizeLine(line).replace(/([.!?])([A-Z])/g, "$1 $2");
+    if (normalized.length > 220) {
+      const sentences = normalized
+        .split(/(?<=[.!?])\s+/)
+        .map((sentence) => sentence.trim())
+        .filter(Boolean);
+      if (sentences.length > 1) {
+        output.push(...sentences);
+        continue;
+      }
+    }
+    output.push(normalized);
+  }
+  return cleanLines(output, 120);
 }
 
 function sanitizeLine(value) {

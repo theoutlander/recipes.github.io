@@ -112,7 +112,10 @@ function buildRecipeHtml(recipe, siteUrl) {
   const canonicalUrl = siteUrl ? `${siteUrl}/${canonicalPath}` : canonicalPath;
   const imageUrl = recipe.meta.imageUrl || "";
   const ingredients = recipe.ingredients.map((item) => formatIngredient(item));
+  const miseItems = (recipe.mise || []).map((item) => String(item || "").trim()).filter(Boolean);
+  const bowlItems = Array.isArray(recipe.bowls) ? recipe.bowls : [];
   const stepItems = recipe.steps.map((step) => String(step || "").trim()).filter(Boolean);
+  const initialStepText = stepItems[0] || "No steps available.";
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Recipe",
@@ -144,7 +147,7 @@ function buildRecipeHtml(recipe, siteUrl) {
     <link rel="stylesheet" href="../recipe.css" />
     <script type="application/ld+json">${escapeJsonLd(jsonLd)}</script>
   </head>
-  <body>
+  <body data-recipe-slug="${escapeHtml(recipe.meta.slug)}">
     <main class="recipe-shell">
       <a class="back-link" href="../">← Back to all recipes</a>
       <header class="recipe-head">
@@ -155,37 +158,74 @@ function buildRecipeHtml(recipe, siteUrl) {
             recipe.meta.servings ? `${recipe.meta.servings} servings` : "Serving size not specified"
           )}
         </p>
+        <div class="head-actions">
+          <button type="button" class="action-btn" id="toggleCookMode" aria-pressed="false">Start Cook Mode</button>
+          <button type="button" class="action-btn ghost" id="resetChecklist">Reset Checklist</button>
+        </div>
+        <div class="progress-wrap" aria-live="polite">
+          <p id="progressLabel">0 of ${stepItems.length} steps complete</p>
+          <div class="progress-track" id="progressTrack" role="progressbar" aria-valuemin="0" aria-valuemax="${stepItems.length}" aria-valuenow="0">
+            <span id="progressBar"></span>
+          </div>
+        </div>
         ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(title)}" />` : ""}
       </header>
 
+      <section class="card cook-focus" id="cookFocus" ${stepItems.length === 0 ? "hidden" : ""}>
+        <p class="focus-kicker">Quick Follow</p>
+        <h2 id="focusStepNumber">Step 1</h2>
+        <p id="focusStepText">${escapeHtml(initialStepText)}</p>
+        <div class="focus-controls">
+          <button type="button" class="action-btn small" id="stepPrev">Previous</button>
+          <button type="button" class="action-btn small" id="stepDone">Mark Step Done</button>
+          <button type="button" class="action-btn small" id="stepNext">Next</button>
+        </div>
+      </section>
+
       <section class="recipe-grid">
-        <article class="card">
+        <article class="card checklist-card">
           <h2>Ingredients</h2>
-          <ul>
-            ${ingredients.map((ingredient) => `<li>${escapeHtml(ingredient)}</li>`).join("")}
+          <ul class="check-list">
+            ${
+              ingredients.length > 0
+                ? ingredients
+                    .map((ingredient, index) => buildChecklistItemHtml(ingredient, "ingredients", `ingredient-${index}`))
+                    .join("")
+                : "<li class=\"empty-line\">No ingredients found.</li>"
+            }
           </ul>
         </article>
-        <article class="card">
+        <article class="card checklist-card">
           <h2>Mise en Place</h2>
-          <ul>
-            ${(recipe.mise || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+          <ul class="check-list">
+            ${
+              miseItems.length > 0
+                ? miseItems
+                    .map((item, index) => buildChecklistItemHtml(item, "mise", `mise-${index}`))
+                    .join("")
+                : "<li class=\"empty-line\">Gather all ingredients and tools before cooking.</li>"
+            }
           </ul>
         </article>
       </section>
 
-      <section class="card">
+      <section class="card steps-card">
         <h2>Steps</h2>
-        <ol>
-          ${stepItems.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}
+        <ol class="steps-list" id="stepsList">
+          ${
+            stepItems.length > 0
+              ? stepItems.map((step, index) => buildStepItemHtml(step, index)).join("")
+              : "<li class=\"empty-line\">No steps found.</li>"
+          }
         </ol>
       </section>
 
       ${
-        recipe.bowls && recipe.bowls.length > 0
+        bowlItems.length > 0
           ? `<section class="card">
         <h2>Bowl Plan</h2>
         <ul>
-          ${recipe.bowls
+          ${bowlItems
             .map(
               (bowl) =>
                 `<li><strong>${escapeHtml(bowl.name || "Bowl")}</strong>: ${escapeHtml(
@@ -215,6 +255,7 @@ function buildRecipeHtml(recipe, siteUrl) {
         }
       </section>
     </main>
+    <script src="../recipe-page.js" defer></script>
   </body>
 </html>`;
 }
@@ -247,6 +288,29 @@ function formatIngredient(item) {
   const prep = item.prep ? String(item.prep).trim() : "";
   const base = [qty, unit, name].filter(Boolean).join(" ").trim();
   return prep ? `${base} (${prep})` : base;
+}
+
+function buildChecklistItemHtml(label, group, id) {
+  const text = String(label || "").trim();
+  return `<li class="check-item">
+    <label>
+      <input type="checkbox" data-check-group="${escapeHtml(group)}" data-check-id="${escapeHtml(id)}" />
+      <span>${escapeHtml(text)}</span>
+    </label>
+  </li>`;
+}
+
+function buildStepItemHtml(step, index) {
+  const stepNumber = index + 1;
+  return `<li class="step-item" id="step-${stepNumber}" data-step-index="${stepNumber}" data-step-text="${escapeHtml(
+    step
+  )}">
+    <label class="step-check">
+      <input type="checkbox" data-check-group="steps" data-check-id="step-${stepNumber}" />
+      <span class="step-copy"><strong>Step ${stepNumber}:</strong> ${escapeHtml(step)}</span>
+    </label>
+    <button type="button" class="focus-jump" data-step-jump="${stepNumber}">Focus</button>
+  </li>`;
 }
 
 function slugify(value) {

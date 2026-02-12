@@ -14,6 +14,7 @@ This project is now a **local publishing pipeline + static public site**:
 - Local batch tool: `scripts/publish-from-urls.js`
 - Static public site:
   - `index.html`, `site.css`, `site.js`
+  - `recipe-page.js` (cook mode + checklist progress)
   - `recipes/*.html`, `recipes/index.json`
   - `sitemap.xml`, `robots.txt`
 
@@ -65,6 +66,14 @@ Optional args for batch publish:
 - `--servings <n>` default servings for imported recipes
 - `--limit <n>` max URLs per run (default `50`)
 - `--republish` force republish even if source URL already exists
+- `--recheck-existing` re-extract existing source URLs and only republish when extracted content changed
+
+Change-reprocessing behavior:
+
+- Each published recipe stores `meta.sourceFingerprint` from extracted title/author/ingredients/steps.
+- `--recheck-existing` compares new extraction fingerprint against the stored fingerprint.
+- If unchanged, recipe is skipped.
+- If changed, recipe is republished in-place (same slug) and static pages are rebuilt.
 
 ## Environment
 

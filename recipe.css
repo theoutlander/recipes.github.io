@@ -1,6 +1,6 @@
 .recipe-shell {
-  width: min(980px, 94vw);
-  margin: 1.6rem auto 3rem;
+  width: min(1020px, 94vw);
+  margin: 1.4rem auto 3rem;
 }
 
 .back-link {
@@ -17,8 +17,8 @@
 
 .recipe-head {
   border: 1px solid #d8ccb6;
-  border-radius: 18px;
-  background: #fffaf3;
+  border-radius: 20px;
+  background: linear-gradient(140deg, #fffaf3 0%, #f6eddd 100%);
   padding: 1rem;
   box-shadow: 0 18px 44px -30px rgba(35, 28, 12, 0.42);
 }
@@ -47,6 +47,65 @@
   color: #685f52;
 }
 
+.head-actions {
+  margin-top: 0.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  border: 1px solid #0d6b5f;
+  background: #0f6f63;
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.48rem 0.86rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.action-btn.ghost {
+  background: #fefefe;
+  color: #0f6f63;
+  border-color: #9fc4bd;
+}
+
+.action-btn.small {
+  padding: 0.38rem 0.72rem;
+}
+
+.action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.progress-wrap {
+  margin-top: 0.75rem;
+}
+
+.progress-wrap p {
+  margin: 0;
+  color: #5a5247;
+  font-size: 0.92rem;
+}
+
+.progress-track {
+  margin-top: 0.38rem;
+  height: 8px;
+  border-radius: 999px;
+  background: #dfd6c7;
+  overflow: hidden;
+}
+
+.progress-track span {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #c55f32 0%, #0f6f63 100%);
+  transition: width 0.2s ease;
+}
+
 .recipe-head img {
   width: 100%;
   margin-top: 0.8rem;
@@ -54,6 +113,42 @@
   border: 1px solid #dbcdb6;
   max-height: 390px;
   object-fit: cover;
+}
+
+.cook-focus {
+  margin-top: 0.75rem;
+  position: sticky;
+  top: 0.4rem;
+  z-index: 12;
+  border-color: #b7d4cd;
+  background: linear-gradient(135deg, #f2faf8 0%, #eef6f4 60%, #fff 100%);
+}
+
+.focus-kicker {
+  margin: 0;
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0d6257;
+  font-weight: 700;
+}
+
+.cook-focus h2 {
+  margin: 0.35rem 0 0;
+  font-size: 1.45rem;
+}
+
+.cook-focus p {
+  margin: 0.45rem 0 0;
+  color: #2f352f;
+  line-height: 1.45;
+}
+
+.focus-controls {
+  margin-top: 0.7rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
 }
 
 .recipe-grid {
@@ -76,23 +171,110 @@
   font-size: 1.3rem;
 }
 
-.card ul,
-.card ol {
+.check-list {
+  list-style: none;
   margin: 0.6rem 0 0;
-  padding-left: 1.05rem;
-  color: #443d32;
+  padding: 0;
 }
 
-.card li {
-  margin-top: 0.36rem;
-  line-height: 1.38;
+.check-item {
+  margin-top: 0.42rem;
+}
+
+.check-item label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  line-height: 1.4;
+}
+
+.check-item input {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-top: 0.1rem;
+}
+
+.empty-line {
+  color: #6c6457;
+}
+
+.steps-list {
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step-item {
+  margin-top: 0.58rem;
+  border: 1px solid #e3d8c6;
+  border-radius: 12px;
+  background: #fff;
+  padding: 0.6rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.72rem;
+}
+
+.step-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  flex: 1;
+}
+
+.step-check input {
+  width: 1.08rem;
+  height: 1.08rem;
+  margin-top: 0.12rem;
+}
+
+.step-copy {
+  line-height: 1.44;
+  color: #322d25;
+}
+
+.focus-jump {
+  border: 1px solid #afd0ca;
+  border-radius: 999px;
+  background: #eff8f6;
+  color: #0f6c61;
+  padding: 0.28rem 0.65rem;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.step-item.is-active {
+  border-color: #6da99f;
+  box-shadow: 0 0 0 2px rgba(15, 111, 99, 0.12);
+}
+
+.step-item.is-complete .step-copy {
+  color: #6f675c;
+  text-decoration: line-through;
 }
 
 .credit-card a {
   color: #0e6458;
 }
 
-@media (max-width: 780px) {
+body.cook-mode .recipe-head img {
+  display: none;
+}
+
+body.cook-mode .step-copy {
+  font-size: 1.08rem;
+  line-height: 1.55;
+}
+
+body.cook-mode .step-item {
+  border-width: 2px;
+  padding: 0.75rem;
+}
+
+@media (max-width: 860px) {
   .recipe-grid {
     grid-template-columns: 1fr;
   }

@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { createHash } from "node:crypto";
 
 const DEFAULT_API_BASE = process.env.API_BASE_URL || "http://localhost:3030";
 const DEFAULT_FILE = "content/source-urls.txt";
@@ -28,9 +29,11 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   const filePath = path.resolve(process.cwd(), args.file || DEFAULT_FILE);
   const apiBase = String(args.api || DEFAULT_API_BASE).replace(/\/+$/, "");
-  const servings = Number(args.servings || 4);
+  const servingsArg = args.servings !== undefined ? Number(args.servings) : null;
+  const defaultServings = Number.isFinite(servingsArg) && servingsArg > 0 ? servingsArg : 4;
   const limit = Number(args.limit || 50);
   const republish = Boolean(args.republish);
+  const recheckExisting = Boolean(args.recheckExisting);
   const adminKey = String(args.key || ADMIN_KEY).trim();
 
   if (!fs.existsSync(filePath)) {
@@ -41,27 +44,29 @@ async function main() {
   }
 
   const urls = dedupe(readUrls(filePath));
-  const existingSourceUrls = loadExistingSourceUrls(path.join(process.cwd(), "content", "recipes"));
+  const existingRecipeIndex = loadExistingRecipeIndex(path.join(process.cwd(), "content", "recipes"));
   const publishQueue = [];
   for (const url of urls) {
-    if (!republish && existingSourceUrls.has(normalizeUrlKey(url))) {
+    const existing = existingRecipeIndex.get(normalizeUrlKey(url)) || null;
+    if (existing && !republish && !recheckExisting) {
       continue;
     }
-    publishQueue.push(url);
+    publishQueue.push({ url, existing });
     if (publishQueue.length >= limit) {
       break;
     }
   }
 
   if (publishQueue.length === 0) {
-    process.stdout.write("No new URLs to publish.\n");
+    process.stdout.write("No URLs to process.\n");
     return;
   }
 
   process.stdout.write(`Publishing ${publishQueue.length} URL(s) via ${apiBase}\n`);
   const results = [];
 
-  for (const url of publishQueue) {
+  for (const item of publishQueue) {
+    const { url, existing } = item;
     try {
       process.stdout.write(`- Extracting: ${url}\n`);
       const extracted = await apiRequest(`${apiBase}/api/extract`, {
@@ -69,7 +74,19 @@ async function main() {
         body: JSON.stringify({ url }),
       });
 
-      const recipe = normalizeForPublish(extracted, url, servings);
+      const sourceFingerprint = computeSourceFingerprint(extracted, url);
+      const previousFingerprint = existing?.sourceFingerprint || "";
+      if (existing && recheckExisting && !republish && previousFingerprint && previousFingerprint === sourceFingerprint) {
+        results.push({ url, status: "unchanged", slug: existing.slug });
+        process.stdout.write("  unchanged (source fingerprint match)\n");
+        continue;
+      }
+
+      const servings = resolveServings(defaultServings, existing?.servings);
+      const recipe = normalizeForPublish(extracted, url, servings, {
+        existing,
+        sourceFingerprint,
+      });
       if (recipe.ingredients.length === 0 || recipe.steps.length === 0) {
         results.push({ url, status: "skipped", reason: "No full ingredient/step extraction." });
         process.stdout.write("  skipped (missing ingredients or steps)\n");
@@ -101,10 +118,11 @@ async function main() {
   }
 
   const publishedCount = results.filter((item) => item.status === "published").length;
+  const unchangedCount = results.filter((item) => item.status === "unchanged").length;
   const skippedCount = results.filter((item) => item.status === "skipped").length;
   const failedCount = results.filter((item) => item.status === "failed").length;
   process.stdout.write(
-    `Done. Published: ${publishedCount}, Skipped: ${skippedCount}, Failed: ${failedCount}\n`
+    `Done. Published: ${publishedCount}, Unchanged: ${unchangedCount}, Skipped: ${skippedCount}, Failed: ${failedCount}\n`
   );
 }
 
@@ -129,6 +147,8 @@ function parseArgs(args) {
       index += 1;
     } else if (arg === "--republish") {
       parsed.republish = true;
+    } else if (arg === "--recheck-existing") {
+      parsed.recheckExisting = true;
     }
   }
   return parsed;
@@ -142,8 +162,8 @@ function readUrls(filePath) {
     .filter((line) => line && !line.startsWith("#"));
 }
 
-function loadExistingSourceUrls(directoryPath) {
-  const output = new Set();
+function loadExistingRecipeIndex(directoryPath) {
+  const output = new Map();
   if (!fs.existsSync(directoryPath)) {
     return output;
   }
@@ -155,7 +175,19 @@ function loadExistingSourceUrls(directoryPath) {
       const recipe = JSON.parse(raw);
       const sourceUrl = String(recipe?.meta?.sourceUrl || "").trim();
       if (sourceUrl) {
-        output.add(normalizeUrlKey(sourceUrl));
+        const key = normalizeUrlKey(sourceUrl);
+        const candidate = {
+          sourceUrl,
+          slug: String(recipe?.meta?.slug || path.basename(file, ".json")).trim() || path.basename(file, ".json"),
+          servings: Number(recipe?.meta?.servings || 0) || 0,
+          publishedAt: String(recipe?.meta?.publishedAt || "").trim(),
+          sourceFingerprint: String(recipe?.meta?.sourceFingerprint || "").trim(),
+          updatedAt: String(recipe?.meta?.updatedAt || recipe?.meta?.normalizedAt || "").trim(),
+        };
+        const existing = output.get(key);
+        if (!existing || toTimestamp(candidate.updatedAt) >= toTimestamp(existing.updatedAt)) {
+          output.set(key, candidate);
+        }
       }
     } catch {
       // Ignore unreadable records.
@@ -166,6 +198,18 @@ function loadExistingSourceUrls(directoryPath) {
 
 function normalizeUrlKey(value) {
   return String(value || "").trim().toLowerCase();
+}
+
+function toTimestamp(value) {
+  const timestamp = Date.parse(String(value || "").trim());
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+function resolveServings(defaultServings, existingServings) {
+  if (Number.isFinite(existingServings) && Number(existingServings) > 0) {
+    return Number(existingServings);
+  }
+  return defaultServings;
 }
 
 async function apiRequest(url, options = {}) {
@@ -186,10 +230,12 @@ async function apiRequest(url, options = {}) {
   return data;
 }
 
-function normalizeForPublish(extractedPayload, sourceUrl, servings) {
+function normalizeForPublish(extractedPayload, sourceUrl, servings, options = {}) {
   const extracted = extractedPayload.extracted || {};
   const discovery = extractedPayload.discovery || null;
   const sourceType = extractedPayload.detectedType || "manual";
+  const existing = options.existing || null;
+  const sourceFingerprint = String(options.sourceFingerprint || "").trim();
   const ingredients = parseIngredients(extracted.ingredients || []);
   const steps = parseSteps(extracted.steps || []);
   applyFirstStep(ingredients, steps);
@@ -204,6 +250,10 @@ function normalizeForPublish(extractedPayload, sourceUrl, servings) {
     servings: Number.isFinite(servings) && servings > 0 ? servings : 4,
     imageUrl: (extracted.imageUrl || "").trim(),
     creditNotes: (extracted.creditNotes || "").trim(),
+    slug: existing?.slug || "",
+    publishedAt: existing?.publishedAt || "",
+    sourceFingerprint,
+    sourceLastCheckedAt: new Date().toISOString(),
     normalizedAt: new Date().toISOString(),
   };
 
@@ -235,6 +285,40 @@ function normalizeForPublish(extractedPayload, sourceUrl, servings) {
   };
 }
 
+function computeSourceFingerprint(extractedPayload, sourceUrl) {
+  const extracted = extractedPayload?.extracted || {};
+  const discovery = extractedPayload?.discovery || {};
+  const comparable = {
+    sourceUrl: normalizeUrlKey(sourceUrl),
+    sourceType: String(extractedPayload?.detectedType || "").trim().toLowerCase(),
+    title: normalizeFingerprintText(extracted.title),
+    author: normalizeFingerprintText(extracted.author),
+    imageUrl: normalizeUrlKey(extracted.imageUrl || ""),
+    ingredients: normalizeFingerprintList(extracted.ingredients || []),
+    steps: normalizeFingerprintList(extracted.steps || []),
+    recipeLinks: normalizeFingerprintList(discovery.recipeLinks || []),
+  };
+  return createHash("sha256").update(JSON.stringify(comparable)).digest("hex");
+}
+
+function normalizeFingerprintText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeFingerprintList(values) {
+  return dedupe(
+    (Array.isArray(values) ? values : [values]).map((value) =>
+      String(value || "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim()
+    )
+  );
+}
+
 function parseIngredients(lines) {
   return lines.map((line, index) => parseIngredientLine(String(line || "").trim(), index)).filter(Boolean);
 }
@@ -256,14 +340,8 @@ function parseIngredientLine(line, index) {
 
   if (match) {
     quantity = (match[1] || "").trim();
-    const maybeUnit = cleaned
-      .slice((match[1] || "").length)
-      .trim()
-      .match(new RegExp("^" + UNIT_PATTERN + "\\.?", "i"));
-    if (maybeUnit) {
-      unit = maybeUnit[0].replace(/\.$/, "");
-    }
-    core = (match[2] || cleaned).trim();
+    unit = (match[2] || "").replace(/\.$/, "").trim();
+    core = (match[3] || cleaned).trim();
   }
 
   const commaSplit = core.split(",");

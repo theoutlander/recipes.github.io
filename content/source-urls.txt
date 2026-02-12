@@ -1,3 +1,2 @@
-# One URL per line. Lines starting with # are ignored.
-# Example:
-# https://www.allrecipes.com/recipe/23600/worlds-best-lasagna/
+# Auto-generated from URL inbox feed
+# Generated: 2026-02-12T04:56:09.610Z

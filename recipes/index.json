@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-12T08:05:57.663Z",
+  "updatedAt": "2026-02-12T08:14:01.817Z",
   "recipes": [
     {
       "slug": "panera-s-broccoli-cheddar-soup",
@@ -9,19 +9,8 @@
       "sourceType": "web",
       "sourceLabel": "Web Article",
       "description": "Met the 1/4 cup butter and sautee the onions on the stove-top until soft. Sprinkle the flour over the mixture. Cook and stir over medium heat for 1-2 minutes.",
-      "updatedAt": "2026-02-12T08:05:57.662Z",
+      "updatedAt": "2026-02-12T08:14:01.815Z",
       "url": "recipes/panera-s-broccoli-cheddar-soup.html"
-    },
-    {
-      "slug": "panera-s-broccoli-cheddar-soup-the-girl-who-ate-everything",
-      "title": "Panera's Broccoli Cheddar Soup - The Girl Who Ate Everything",
-      "author": "",
-      "imageUrl": "https://www.the-girl-who-ate-everything.com/wp-content/uploads/2015/09/panera-broccoli-soup-4-300x300.jpg",
-      "sourceType": "web",
-      "sourceLabel": "Web Article",
-      "description": "Melt the 1/4 cup butter and sautee the 1/2 medium chopped onion in the butter until soft. Sprinkle the 1/4 cup flour over the mixture. Cook and stir over medium heat for 1-2 minute",
-      "updatedAt": "2026-02-12T08:05:57.661Z",
-      "url": "recipes/panera-s-broccoli-cheddar-soup-the-girl-who-ate-everything.html"
     }
   ]
 }

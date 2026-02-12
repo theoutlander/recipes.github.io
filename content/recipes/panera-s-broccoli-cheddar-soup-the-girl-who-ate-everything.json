@@ -1,0 +1,80 @@
+{
+  "meta": {
+    "title": "Panera's Broccoli Cheddar Soup - The Girl Who Ate Everything",
+    "author": "",
+    "sourceType": "web",
+    "sourceUrl": "https://www.the-girl-who-ate-everything.com/wprm_print/paneras-broccoli-cheddar-soup-2",
+    "servings": 4,
+    "imageUrl": "https://www.the-girl-who-ate-everything.com/wp-content/uploads/2015/09/panera-broccoli-soup-4-300x300.jpg",
+    "creditNotes": "Adapted from www.the-girl-who-ate-everything.com. Keep attribution to the original creator.",
+    "normalizedAt": "2026-02-12T04:57:06.704Z",
+    "slug": "panera-s-broccoli-cheddar-soup-the-girl-who-ate-everything",
+    "updatedAt": "2026-02-12T04:57:06.916Z",
+    "publishedAt": "2026-02-12T04:57:06.745Z"
+  },
+  "ingredients": [
+    {
+      "id": "ing-0",
+      "raw": "1/4 cup butter1/2 medium chopped onion1/4 cup flour2 cups half-and-half cream2 cups low-sodium chicken stock or broth1/2 lb broccoli, (about 3 cups), chopped into bite size pieces1 cup carrot, julienned (can buy matchstick carrots in produce section)1/8 teaspoon nutmeg, (optional but brings out the flavor)8 ounces grated sharp cheddar cheese, (2 cups)salt and pepper",
+      "quantity": "1/4",
+      "unit": "cup",
+      "name": "cup",
+      "prep": "",
+      "firstStep": 0,
+      "bowl": "",
+      "category": "Other"
+    }
+  ],
+  "steps": [
+    "Melt the 1/4 cup butter and sautee the 1/2 medium chopped onion in the butter until soft. Sprinkle the 1/4 cup flour over the mixture. Cook and stir over medium heat for 1-2 minutes.Whisk in the 2 cups half-and-half cream and 2 cups low-sodium chicken stock or broth. Bring to a boil then reduce heat to medium.Add the 1/2 lb broccoli and 1 cup carrot. Cook over medium-low heat for 20-25 minutes or until the broccoli and carrots are tender.Add salt and pepper. You can leave the soup chunky or blend about 1 cup of the soup and stir it in for a smoother soup (that's what I do). Return to low heat and add the 8 ounces grated sharp cheddar cheese. If your heat is too high your soup can get grainy. Stir in the nutmeg if desired.Serve with crusty bread."
+  ],
+  "bowls": [
+    {
+      "name": "Bowl 1",
+      "step": 1,
+      "ingredients": [
+        "cup"
+      ]
+    }
+  ],
+  "separate": [],
+  "mise": [
+    "Stage Bowl 1: cup before Step 1"
+  ],
+  "shopping": {
+    "Other": [
+      {
+        "name": "cup",
+        "unit": "cup",
+        "quantityText": "1/4"
+      }
+    ]
+  },
+  "citation": {
+    "sourceType": "Web Article",
+    "sourceUrl": "https://www.the-girl-who-ate-everything.com/wprm_print/paneras-broccoli-cheddar-soup-2",
+    "author": "",
+    "capturedOn": "2/12/2026",
+    "creditLine": "Adapted from www.the-girl-who-ate-everything.com. Keep attribution to the original creator.",
+    "extractionMethod": "html-heuristics",
+    "references": [
+      "https://www.the-girl-who-ate-everything.com/wprm_print/paneras-broccoli-cheddar-soup-2"
+    ]
+  },
+  "discovery": {
+    "method": "html-heuristics",
+    "detectedType": "web",
+    "transcriptAvailable": false,
+    "recipeLinks": [
+      "https://www.the-girl-who-ate-everything.com/wprm_print/paneras-broccoli-cheddar-soup-2"
+    ],
+    "notes": [
+      "Used heading and list heuristics."
+    ]
+  },
+  "checkState": {
+    "mise": {},
+    "steps": {},
+    "shopping": {}
+  }
+}

@@ -114,7 +114,11 @@ async function main() {
         existing,
         sourceFingerprint,
       });
-      if (recipe.ingredients.length === 0 || recipe.steps.length === 0) {
+      const isYouTube = recipe?.meta?.sourceType === "youtube";
+      const hasInsufficientData = isYouTube
+        ? recipe.ingredients.length === 0 && recipe.steps.length === 0
+        : recipe.ingredients.length === 0 || recipe.steps.length === 0;
+      if (hasInsufficientData) {
         results.push({ url, status: "skipped", reason: "No full ingredient/step extraction." });
         process.stdout.write("  skipped (missing ingredients or steps)\n");
         continue;
@@ -280,7 +284,10 @@ function normalizeForPublish(extractedPayload, sourceUrl, servings, options = {}
   const existing = options.existing || null;
   const sourceFingerprint = String(options.sourceFingerprint || "").trim();
   const ingredients = parseIngredients(extracted.ingredients || []);
-  const steps = parseSteps(extracted.steps || []);
+  let steps = parseSteps(extracted.steps || []);
+  if (sourceType === "youtube" && steps.length === 0) {
+    steps = buildYouTubeFallbackSteps(sourceUrl, discovery);
+  }
   applyFirstStep(ingredients, steps);
   const bowls = buildBowlPlan(ingredients);
   const mise = buildMiseTasks(ingredients, bowls);
@@ -513,6 +520,26 @@ function capitalize(value) {
     return "";
   }
   return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function buildYouTubeFallbackSteps(sourceUrl, discovery) {
+  const steps = ["Open the original video and follow the creator's demonstrated method."];
+  const primaryUrl = String(sourceUrl || "").trim();
+  if (primaryUrl) {
+    steps.push(`Watch: ${primaryUrl}`);
+  }
+  const references = Array.isArray(discovery?.recipeLinks) ? discovery.recipeLinks : [];
+  for (const reference of references) {
+    const cleaned = String(reference || "").trim();
+    if (!cleaned || cleaned === primaryUrl) {
+      continue;
+    }
+    steps.push(`Reference: ${cleaned}`);
+    if (steps.length >= 4) {
+      break;
+    }
+  }
+  return steps;
 }
 
 main().catch((error) => {

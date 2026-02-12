@@ -1,18 +1,18 @@
 {
   "meta": {
-    "title": "Panera's Broccoli Cheddar Soup - The Girl Who Ate Everything",
-    "author": "",
+    "title": "Panera's Broccoli Cheddar Soup",
+    "author": "Christy Denney",
     "sourceType": "web",
-    "sourceUrl": "https://www.the-girl-who-ate-everything.com/wprm_print/paneras-broccoli-cheddar-soup-2",
+    "sourceUrl": "https://www.the-girl-who-ate-everything.com/panera-broccoli-cheese-soup/",
     "servings": 4,
-    "imageUrl": "https://www.the-girl-who-ate-everything.com/wp-content/uploads/2015/09/panera-broccoli-soup-4-300x300.jpg",
-    "creditNotes": "Adapted from www.the-girl-who-ate-everything.com. Keep attribution to the original creator.",
-    "slug": "panera-s-broccoli-cheddar-soup-the-girl-who-ate-everything",
-    "publishedAt": "2026-02-12T05:48:35.789Z",
-    "sourceFingerprint": "6a258561c4c55ba8e50b6320fe97e4636de7cca5ddc65e38c8c5d2e10616d3c6",
-    "sourceLastCheckedAt": "2026-02-12T05:49:29.795Z",
-    "normalizedAt": "2026-02-12T05:49:29.795Z",
-    "updatedAt": "2026-02-12T08:00:10.029Z"
+    "imageUrl": "https://www.the-girl-who-ate-everything.com/wp-content/uploads/2015/09/panera-broccoli-soup-4.jpg",
+    "creditNotes": "Adapted from Christy Denney. Keep attribution when republishing.",
+    "slug": "panera-s-broccoli-cheddar-soup",
+    "publishedAt": "2026-02-12T08:00:09.848Z",
+    "sourceFingerprint": "692a07cb4c282632c9fb80dc2918ba144ffd48b4de549d4451e1df40cd205d01",
+    "sourceLastCheckedAt": "2026-02-12T08:00:09.840Z",
+    "normalizedAt": "2026-02-12T08:00:09.840Z",
+    "updatedAt": "2026-02-12T08:00:10.030Z"
   },
   "ingredients": [
     {
@@ -33,7 +33,7 @@
       "unit": "",
       "name": "medium chopped onion",
       "prep": "chopped",
-      "firstStep": 0,
+      "firstStep": 5,
       "bowl": "",
       "category": "Produce"
     },
@@ -55,7 +55,7 @@
       "unit": "cups",
       "name": "half-and-half cream",
       "prep": "",
-      "firstStep": 1,
+      "firstStep": 6,
       "bowl": "",
       "category": "Dairy"
     },
@@ -66,7 +66,7 @@
       "unit": "cups",
       "name": "low-sodium chicken stock or broth",
       "prep": "",
-      "firstStep": 1,
+      "firstStep": 6,
       "bowl": "",
       "category": "Protein"
     },
@@ -110,7 +110,7 @@
       "unit": "ounces",
       "name": "grated sharp cheddar cheese",
       "prep": "(2 cups)",
-      "firstStep": 3,
+      "firstStep": 8,
       "bowl": "",
       "category": "Dairy"
     },
@@ -127,11 +127,15 @@
     }
   ],
   "steps": [
+    "Met the 1/4 cup butter and sautee the onions on the stove-top until soft. Sprinkle the flour over the mixture. Cook and stir over medium heat for 1-2 minutes.",
+    "Whisk in the half & half and chicken broth. You can also use heavy cream.",
+    "Add the broccoli florets and carrots. Cook over medium-low heat for 20-25 minutes or until the broccoli and carrots are tender.",
+    "Add salt and pepper. You can leave the soup chunky or blend about 1 cup of the soup with an immersion blender and stir it in for a smoother soup (that’s what I do). Return to low heat and add the cheese. If your heat is too high your soup can get grainy. Stir in the nutmeg if desired.",
+    "Serve with crusty bread.",
     "Melt the 1/4 cup butter and sautee the 1/2 medium chopped onion in the butter until soft. Sprinkle the 1/4 cup flour over the mixture. Cook and stir over medium heat for 1-2 minutes.",
     "Whisk in the 2 cups half-and-half cream and 2 cups low-sodium chicken stock or broth. Bring to a boil then reduce heat to medium.",
     "Add the 1/2 lb broccoli and 1 cup carrot. Cook over medium-low heat for 20-25 minutes or until the broccoli and carrots are tender.",
-    "Add salt and pepper. You can leave the soup chunky or blend about 1 cup of the soup and stir it in for a smoother soup (that's what I do). Return to low heat and add the 8 ounces grated sharp cheddar cheese. If your heat is too high your soup can get grainy. Stir in the nutmeg if desired.",
-    "Serve with crusty bread."
+    "Add salt and pepper. You can leave the soup chunky or blend about 1 cup of the soup and stir it in for a smoother soup (that's what I do). Return to low heat and add the 8 ounces grated sharp cheddar cheese. If your heat is too high your soup can get grainy. Stir in the nutmeg if desired."
   ],
   "bowls": [
     {
@@ -139,20 +143,11 @@
       "step": 1,
       "ingredients": [
         "butter",
-        "medium chopped onion",
         "flour"
       ]
     },
     {
       "name": "Bowl 2",
-      "step": 2,
-      "ingredients": [
-        "half-and-half cream",
-        "low-sodium chicken stock or broth"
-      ]
-    },
-    {
-      "name": "Bowl 3",
       "step": 3,
       "ingredients": [
         "broccoli",
@@ -160,12 +155,33 @@
       ]
     },
     {
-      "name": "Bowl 4",
+      "name": "Bowl 3",
       "step": 4,
       "ingredients": [
         "nutmeg",
-        "grated sharp cheddar cheese",
         "salt and pepper"
+      ]
+    },
+    {
+      "name": "Bowl 4",
+      "step": 6,
+      "ingredients": [
+        "medium chopped onion"
+      ]
+    },
+    {
+      "name": "Bowl 5",
+      "step": 7,
+      "ingredients": [
+        "half-and-half cream",
+        "low-sodium chicken stock or broth"
+      ]
+    },
+    {
+      "name": "Bowl 6",
+      "step": 9,
+      "ingredients": [
+        "grated sharp cheddar cheese"
       ]
     }
   ],
@@ -176,10 +192,12 @@
     "Julienned (can buy matchstick carrots in produce section) carrot",
     "(optional but brings out the flavor) nutmeg",
     "(2 cups) grated sharp cheddar cheese",
-    "Stage Bowl 1: butter, medium chopped onion, flour before Step 1",
-    "Stage Bowl 2: half-and-half cream, low-sodium chicken stock or broth before Step 2",
-    "Stage Bowl 3: broccoli, carrot before Step 3",
-    "Stage Bowl 4: nutmeg, grated sharp cheddar cheese, salt and pepper before Step 4"
+    "Stage Bowl 1: butter, flour before Step 1",
+    "Stage Bowl 2: broccoli, carrot before Step 3",
+    "Stage Bowl 3: nutmeg, salt and pepper before Step 4",
+    "Stage Bowl 4: medium chopped onion before Step 6",
+    "Stage Bowl 5: half-and-half cream, low-sodium chicken stock or broth before Step 7",
+    "Stage Bowl 6: grated sharp cheddar cheese before Step 9"
   ],
   "shopping": {
     "Dairy": [
@@ -245,13 +263,13 @@
   },
   "citation": {
     "sourceType": "Web Article",
-    "sourceUrl": "https://www.the-girl-who-ate-everything.com/wprm_print/paneras-broccoli-cheddar-soup-2",
-    "author": "",
-    "capturedOn": "2/11/2026",
-    "creditLine": "Adapted from www.the-girl-who-ate-everything.com. Keep attribution to the original creator.",
+    "sourceUrl": "https://www.the-girl-who-ate-everything.com/panera-broccoli-cheese-soup/",
+    "author": "Christy Denney",
+    "capturedOn": "2/12/2026",
+    "creditLine": "Adapted from Christy Denney. Keep attribution when republishing.",
     "extractionMethod": "wprm-structured-html",
     "references": [
-      "https://www.the-girl-who-ate-everything.com/wprm_print/paneras-broccoli-cheddar-soup-2"
+      "https://www.the-girl-who-ate-everything.com/panera-broccoli-cheese-soup/"
     ]
   },
   "discovery": {
@@ -259,7 +277,7 @@
     "detectedType": "web",
     "transcriptAvailable": false,
     "recipeLinks": [
-      "https://www.the-girl-who-ate-everything.com/wprm_print/paneras-broccoli-cheddar-soup-2"
+      "https://www.the-girl-who-ate-everything.com/panera-broccoli-cheese-soup/"
     ],
     "notes": [
       "Parsed using WP Recipe Maker structured markup."

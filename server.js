@@ -14,6 +14,8 @@ const REQUEST_TIMEOUT_MS = 14000;
 const ADMIN_KEY = String(process.env.ADMIN_KEY || "dev-admin-key");
 const SITE_URL = String(process.env.SITE_URL || "");
 const CONTENT_RECIPES_DIR = path.join(process.cwd(), "content", "recipes");
+const INSTRUCTION_VERB_PATTERN =
+  /\b(add|mix|stir|cook|bake|heat|whisk|simmer|season|serve|chop|slice|boil|pour|combine|saute|grill|marinate|fry|roast|blend|smoke|shred|strain|garnish|finish|cool|rest|toast|reduce|transfer|cover|switch)\b/i;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -652,6 +654,7 @@ async function extractFromYouTube(url) {
   const description = parseYouTubeDescription(pageHtml);
   const links = dedupeStrings(extractUrls(description));
   const recipeCandidates = links.filter(isLikelyRecipeLink).slice(0, 5);
+  const structuredDescription = parseYouTubeStructuredDescription(description);
   const notes = [];
   let linkedRecipe = null;
 
@@ -672,8 +675,19 @@ async function extractFromYouTube(url) {
     }
   }
 
-  let ingredients = linkedRecipe?.ingredients || extractIngredientLikeLines(description);
-  let steps = linkedRecipe?.steps || extractInstructionLikeLines(description);
+  let ingredients = linkedRecipe?.ingredients || structuredDescription.ingredients;
+  let steps = linkedRecipe?.steps || structuredDescription.steps;
+
+  if (!linkedRecipe && (structuredDescription.ingredients.length > 0 || structuredDescription.steps.length > 0)) {
+    notes.push("Parsed structured Ingredients/Methods sections from video description.");
+  }
+
+  if (ingredients.length === 0) {
+    ingredients = extractIngredientLikeLines(description);
+  }
+  if (steps.length === 0) {
+    steps = extractInstructionLikeLines(description);
+  }
 
   if (steps.length === 0 && transcript.length > 0) {
     steps = transcriptToSteps(transcript);
@@ -709,9 +723,11 @@ async function extractFromYouTube(url) {
 
   const method = linkedRecipe
     ? "youtube-linked-recipe"
-    : transcriptAvailable
-      ? "youtube-transcript-heuristics"
-      : "youtube-description-heuristics";
+    : structuredDescription.ingredients.length > 0 || structuredDescription.steps.length > 0
+      ? "youtube-description-structured"
+      : transcriptAvailable
+        ? "youtube-transcript-heuristics"
+        : "youtube-description-heuristics";
   const creditNotes = author
     ? `Adapted from YouTube creator ${author}. Keep original creator credit.`
     : "Adapted from a YouTube source. Keep original creator credit.";
@@ -790,6 +806,185 @@ function parseYouTubeDescription(html) {
   const $ = cheerio.load(html);
   const metaDescription = readMetaValue($, "name", "description");
   return [decodedShortDescription, metaDescription].sort((a, b) => b.length - a.length)[0] || "";
+}
+
+function parseYouTubeStructuredDescription(text) {
+  if (!text) {
+    return { ingredients: [], steps: [] };
+  }
+
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => sanitizeDescriptionLine(line))
+    .filter(Boolean);
+
+  const ingredients = [];
+  const steps = [];
+  let mode = "unknown";
+
+  for (const line of lines) {
+    const heading = parseDescriptionHeading(line);
+    if (heading) {
+      mode = heading;
+      continue;
+    }
+    if (shouldSkipDescriptionLine(line)) {
+      continue;
+    }
+    if (isLikelyDescriptionSectionLabel(line)) {
+      continue;
+    }
+
+    if (mode === "ingredients") {
+      if (isLikelyIngredientLine(line) || !isLikelyInstructionLine(line)) {
+        const normalized = normalizeIngredientDescriptionLine(line);
+        if (normalized) {
+          ingredients.push(normalized);
+        }
+      }
+      continue;
+    }
+
+    if (mode === "steps") {
+      steps.push(...splitInstructionDescriptionLine(line));
+      continue;
+    }
+
+    if (isLikelyIngredientLine(line) && !isLikelyInstructionLine(line)) {
+      const normalized = normalizeIngredientDescriptionLine(line);
+      if (normalized) {
+        ingredients.push(normalized);
+      }
+      continue;
+    }
+    if (isLikelyInstructionLine(line)) {
+      steps.push(...splitInstructionDescriptionLine(line));
+    }
+  }
+
+  return {
+    ingredients: cleanLines(dedupeStrings(ingredients), 80),
+    steps: cleanLines(dedupeStrings(steps), 80),
+  };
+}
+
+function sanitizeDescriptionLine(line) {
+  return decodeHtml(String(line || ""))
+    .replace(/\u00a0/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/^[-*•]+\s*/, "")
+    .trim();
+}
+
+function parseDescriptionHeading(line) {
+  const normalized = String(line || "").trim();
+  if (!normalized) {
+    return "";
+  }
+  if (/^ingredients?\s*:?$/i.test(normalized)) {
+    return "ingredients";
+  }
+  if (/^(methods?|instructions?|directions?|procedure)\s*:?$/i.test(normalized)) {
+    return "steps";
+  }
+  return "";
+}
+
+function shouldSkipDescriptionLine(line) {
+  const normalized = String(line || "").trim();
+  if (!normalized) {
+    return true;
+  }
+  return (
+    /^#/.test(normalized) ||
+    /^https?:\/\//i.test(normalized) ||
+    /^\d{1,2}:\d{2}(?::\d{2})?\b/.test(normalized) ||
+    /^(written recipe|full recipe|follow me|subscribe|music|timestamps?)\b/i.test(normalized)
+  );
+}
+
+function isLikelyDescriptionSectionLabel(line) {
+  const normalized = String(line || "").trim();
+  if (!normalized) {
+    return false;
+  }
+  if (/^for\s+[a-z0-9/&()\-\/\s]{2,50}:?$/i.test(normalized) && !/\d/.test(normalized)) {
+    return true;
+  }
+  if (/^(powdered spices?|spice mix|marinade|gravy base|final cooking)\s*:?\s*$/i.test(normalized)) {
+    return true;
+  }
+  return /^[a-z][a-z0-9/&(),\-\/\s]{2,80}:\s*$/i.test(normalized) && !isLikelyInstructionLine(normalized);
+}
+
+function isLikelyIngredientLine(line) {
+  const normalized = String(line || "").trim();
+  if (!normalized || normalized.length < 2) {
+    return false;
+  }
+  if (isLikelyDescriptionSectionLabel(normalized)) {
+    return false;
+  }
+  if (isLikelyInstructionLine(normalized)) {
+    return false;
+  }
+  if (/:/.test(normalized) && !/\bto taste\b/i.test(normalized)) {
+    return false;
+  }
+  if (/\bto taste\b/i.test(normalized)) {
+    return true;
+  }
+  if (
+    /\b\d+(?:\s+\d+\/\d+|\/\d+|\.\d+)?\s*(kg|g|gm|grams?|ml|l|cups?|cup|tbsp|tablespoons?|tsp|teaspoons?|lb|lbs|oz|ounces?|nos?\.?|inch|cloves?)\b/i.test(
+      normalized
+    )
+  ) {
+    return true;
+  }
+  if (
+    /\b(kg|g|gm|grams?|ml|l|cups?|cup|tbsp|tablespoons?|tsp|teaspoons?|lb|lbs|oz|ounces?|nos?\.?|inch|cloves?)\s+\d+/i.test(
+      normalized
+    )
+  ) {
+    return true;
+  }
+  return normalized.length <= 70 && /^[a-zA-Z][a-zA-Z0-9(),+\-\/\s]+$/.test(normalized);
+}
+
+function isLikelyInstructionLine(line) {
+  const normalized = String(line || "").trim();
+  if (!normalized || normalized.length < 12) {
+    return false;
+  }
+  return INSTRUCTION_VERB_PATTERN.test(normalized);
+}
+
+function normalizeIngredientDescriptionLine(line) {
+  const normalized = String(line || "").trim();
+  if (!normalized || isLikelyDescriptionSectionLabel(normalized)) {
+    return "";
+  }
+  return normalized
+    .replace(/\b(\d+(?:\.\d+)?)\s*(tbsp|tablespoons?|tsp|teaspoons?|cups?|cup|lb|lbs|oz|grams?|g|ml|l|cloves?|nos?\.?)\b/gi, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function splitInstructionDescriptionLine(line) {
+  const normalized = String(line || "").trim();
+  if (!normalized) {
+    return [];
+  }
+  const parts = normalized
+    .replace(/\.\s*([a-z])/g, (_, char) => `. ${char.toUpperCase()}`)
+    .split(/(?<=[.!?])\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length <= 1) {
+    return isLikelyInstructionLine(normalized) ? [normalized] : [];
+  }
+  return parts.filter((part) => isLikelyInstructionLine(part));
 }
 
 function parseTitleFromHtml(html) {
@@ -890,9 +1085,7 @@ function filterActionInstructionLines(lines) {
       .filter(
         (line) =>
           line.length >= 18 &&
-          /\b(add|mix|stir|cook|bake|heat|whisk|simmer|season|serve|chop|slice|boil|pour|combine|saute|grill|marinate|fry)\b/i.test(
-            line
-          ) &&
+          INSTRUCTION_VERB_PATTERN.test(line) &&
           !/^\s*(ingredients?|powdered spices?|for marinade|for .*gravy|methods?)\s*:?\s*$/i.test(line)
       )
   ).slice(0, 25);
@@ -906,7 +1099,7 @@ function transcriptToSteps(transcriptItems) {
     .filter(Boolean);
 
   const candidates = sentences.filter((line) =>
-    /\b(add|mix|stir|cook|bake|heat|whisk|simmer|season|serve|chop|slice|boil|pour|combine|saute)\b/i.test(line)
+    INSTRUCTION_VERB_PATTERN.test(line)
   );
 
   return dedupeStrings(candidates).slice(0, 18);
